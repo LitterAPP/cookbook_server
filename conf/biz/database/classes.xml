@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<classes> 
+  <!--
+        <package name="demo.ddl">
+            <class name="Demo" comment="测试" />
+        </package>
+        -->  
+  <package name="modules.cookbook.ddl"> 
+    <class name="CookBookCollectDDL" comment=""/>  
+    <class name="CookBookInfoDDL" comment=""/>  
+    <class name="CookBookMaterialDDL" comment=""/>  
+    <class name="CookBookProcessDDL" comment=""/>  
+    <class name="CookBookUsersDDL" comment=""/>  
+    <class name="WxAccessTokenDDL" comment=""/>  
+    <class name="CookBookChildClassDDL" comment=""/>  
+    <class name="CookBookParentClassDDL" comment=""/>  
+    <class name="CookBookClassRelDDL" comment=""/>  
+    <class name="CookBookTagDDL" comment=""/>  
+    <class name="SmsCodeHistoryDDL" comment=""/>  
+    <class name="BaiduAccessTokenDDL" comment=""/>  
+    <class name="CookBookMomentDDL" comment=""/>  
+    <class name="CookBookMomentCommentDDL" comment=""/>  
+    <class name="CookBookMomentTimeLineDDL" comment=""/>  
+    <class name="CookBookFavorClassDDL" comment=""/>  
+    <class name="CookBookCollectStatDDL" comment=""/>  
+    <class name="CookBookViewStatDDL" comment=""/>  
+    <class name="CookBookFavorStatDDL" comment=""/>  
+    <class name="CookBookMenuDDL" comment=""/>  
+    <class name="CookBookMenuRelDDL" comment=""/>  
+    <class name="CookBookMaterialSelectDDL" comment=""/>  
+    <class name="CookBookSubjectDDL" comment=""/>  
+    <class name="BaiduAiDishDDL" comment=""/>  
+    <class name="CookBookMemuCommentDDL" comment=""/>  
+    <class name="CookBookMemuFavorDDL" comment=""/>  
+    <class name="ShopProductDDL" comment=""/>  
+    <class name="ShopOrderDDL" comment=""/>  
+    <class name="ShopProductAttrDDL" comment=""/>  
+    <class name="ShopProductAttrRelDDL" comment=""/>  
+    <class name="ShopProductCategoryDDL" comment=""/>  
+    <class name="ShopProductCategoryChildDDL" comment=""/>  
+    <class name="ShopProductCategoryRelDDL" comment=""/>  
+    <class name="ShopProductGroupDDL" comment=""/>  
+    <class name="UserAccountDDL" comment=""/>  
+    <class name="ShopTogetherDDL" comment=""/>  
+    <class name="ShopTogetherJoinerDDL" comment=""/>  
+    <class name="ShopProductImagesDDL" comment=""/>  
+    <class name="ShopProductCommunityDDL" comment=""/>  
+    <class name="ShopProductCommunityRelDDL" comment=""/>  
+    <class name="ShopExpressDDL" comment=""/>  
+    <class name="ShopExpressCodeDDL" comment=""/>  
+    <class name="ShopExpressTracesDDL" comment=""/>  
+    <class name="ShopCouponMngDDL" comment=""/>  
+    <class name="ShopApplyInfoDDL" comment=""/> 
+  </package>  
+  <package name="modules.forg.ddl"> 
+    <class name="ForgReadingBooksDDL" comment=""/>  
+    <class name="ForgReadingContentShotDDL" comment=""/>  
+    <class name="ForgReadingRecordDDL" comment=""/>  
+    <class name="ForgBookFlowDDL" comment=""/>  
+    <class name="ForgRecordFlowDDL" comment=""/>  
+    <class name="ForgReadingHistoryDDL" comment=""/>  
+    <class name="ForgMusicDDL" comment=""/>  
+    <class name="ForgActivityDDL" comment=""/>  
+    <class name="ForgBainianReplayDDL" comment=""/>  
+    <class name="ForgBainianRecordDDL" comment=""/>  
+    <class name="ForgBainianCoverDDL" comment=""/> 
+  </package>  
+  <package name="modules.common.ddl"> 
+    <class name="FormIdsDDL" comment=""/> 
+  </package> 
+</classes>
