@@ -64,7 +64,8 @@
     <class name="ForgActivityDDL" comment=""/>  
     <class name="ForgBainianReplayDDL" comment=""/>  
     <class name="ForgBainianRecordDDL" comment=""/>  
-    <class name="ForgBainianCoverDDL" comment=""/> 
+    <class name="ForgBainianCoverDDL" comment=""/>  
+    <class name="ForgActivityRankDDL" comment=""/> 
   </package>  
   <package name="modules.common.ddl"> 
     <class name="FormIdsDDL" comment=""/> 

@@ -9,7 +9,7 @@ import jws.dal.common.DbType;
 /**
  * 
  * @author auto
- * @createDate 2018-02-05 17:30:46
+ * @createDate 2018-02-28 14:26:13
  **/
 @Table(name="forg_activity")
 public class ForgActivityDDL{
@@ -49,6 +49,15 @@ public class ForgActivityDDL{
 	}
 	public void setBookCover(String bookCover){
 		this.bookCover=bookCover;
+	}
+
+	@Column(name="prize_example_pic", type=DbType.Varchar)
+	private String prizeExamplePic;
+	public String getPrizeExamplePic() {
+		return prizeExamplePic;
+	}
+	public void setPrizeExamplePic(String prizeExamplePic){
+		this.prizeExamplePic=prizeExamplePic;
 	}
 
 	@Column(name="act_title", type=DbType.Varchar)
@@ -123,6 +132,15 @@ public class ForgActivityDDL{
 		this.actDesc7=actDesc7;
 	}
 
+	@Column(name="rank", type=DbType.Int)
+	private Integer rank;
+	public Integer getRank() {
+		return rank;
+	}
+	public void setRank(Integer rank){
+		this.rank=rank;
+	}
+
 	@Column(name="start_time", type=DbType.DateTime)
 	private Long startTime;
 	public Long getStartTime() {
@@ -147,6 +165,7 @@ public class ForgActivityDDL{
 		object.setBookId(null);
 		object.setBookName(null);
 		object.setBookCover(null);
+		object.setPrizeExamplePic(null);
 		object.setActTitle(null);
 		object.setActDesc1(null);
 		object.setActDesc2(null);
@@ -155,6 +174,7 @@ public class ForgActivityDDL{
 		object.setActDesc5(null);
 		object.setActDesc6(null);
 		object.setActDesc7(null);
+		object.setRank(null);
 		object.setStartTime(null);
 		object.setEndTime(null);
 		return object;

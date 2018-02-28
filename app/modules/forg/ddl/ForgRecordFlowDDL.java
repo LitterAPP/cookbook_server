@@ -9,7 +9,7 @@ import jws.dal.common.DbType;
 /**
  * 
  * @author auto
- * @createDate 2018-01-26 11:48:31
+ * @createDate 2018-02-27 14:32:30
  **/
 @Table(name="forg_record_flow")
 public class ForgRecordFlowDDL{
@@ -22,6 +22,15 @@ public class ForgRecordFlowDDL{
 	}
 	public void setId(Integer id){
 		this.id=id;
+	}
+
+	@Column(name="book_id", type=DbType.Int)
+	private Integer bookId;
+	public Integer getBookId() {
+		return bookId;
+	}
+	public void setBookId(Integer bookId){
+		this.bookId=bookId;
 	}
 
 	@Column(name="record_id", type=DbType.Int)
@@ -72,6 +81,7 @@ public class ForgRecordFlowDDL{
 	public static ForgRecordFlowDDL newExample(){
 		ForgRecordFlowDDL object=new ForgRecordFlowDDL();
 		object.setId(null);
+		object.setBookId(null);
 		object.setRecordId(null);
 		object.setUserId(null);
 		object.setNickName(null);

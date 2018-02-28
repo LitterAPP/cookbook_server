@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 
 import jws.Logger;
 import task.CheckTogetherValid;
+import task.FrogRank;
 
 public class Init implements jws.Init{
 
@@ -14,7 +15,8 @@ public class Init implements jws.Init{
 	@Override
 	public void init() {
 		Logger.info("Plugs init...");
-		service.scheduleAtFixedRate(new CheckTogetherValid(), 0, 10, TimeUnit.MINUTES);
+		//service.scheduleAtFixedRate(new CheckTogetherValid(), 0, 10, TimeUnit.MINUTES); 
+		service.scheduleAtFixedRate(new FrogRank(), 0, 10, TimeUnit.MINUTES);  
  	}
 
 }

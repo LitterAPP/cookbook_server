@@ -559,8 +559,17 @@ public class API {
 			System.out.println(key);
 		}*/		
 
-		String key = uploadToAliOss("tasty",new File("D:\\KwDownload\\song\\xinnianhao.mp3"));
+		/*for(int i=1;i<=4;i++){
+			String path = "C:\\Users\\fish\\Desktop\\青蛙读本\\元宵节\\png\\yuanxiaojie"+i+".png";
+			String key = uploadToAliOss("tasty",new File(path));
+			System.out.println(key);
+		}*/
+		
+		String path = "C:\\Users\\fish\\Desktop\\青蛙读本\\xiaoqingwa.jpg";
+		String key = uploadToAliOss("tasty",new File(path));
 		System.out.println(key);
+		
+		
 		//System.out.print(getAliOssAccessUrl("tasty",key,3600));
 		
 		/*StringBuffer noceStr = new StringBuffer();

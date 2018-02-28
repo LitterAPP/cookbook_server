@@ -18,14 +18,15 @@ import modules.common.service.FormIdService;
 import modules.cookbook.ddl.CookBookUsersDDL;
 import modules.cookbook.service.UserService;
 import modules.forg.ddl.ForgActivityDDL;
+import modules.forg.ddl.ForgActivityRankDDL;
 import modules.forg.ddl.ForgMusicDDL;
 import modules.forg.ddl.ForgReadingBooksDDL;
 import modules.forg.ddl.ForgReadingContentShotDDL;
 import modules.forg.ddl.ForgReadingRecordDDL;
 import modules.forg.service.ForgActivityService;
+import modules.forg.service.ForgBookRecordService;
 import modules.forg.service.ForgBookService;
 import modules.forg.service.ForgBookShotService;
-import modules.forg.service.ForgBoolRecordService;
 import modules.forg.service.ForgMusicService;
 import modules.forg.service.ForgReadHisService;
 import util.API;
@@ -99,7 +100,7 @@ public class Forg extends Controller{
 							return ;
 						}
 						for(FormIdsDDL form : list){
-							API.sendWxMessage(appId, form.getOpenId(), "aisJSMAnCekDS5AkCLu8r0RQUCvopchIh-I77xzAEWo", page, form.getFormId(), dataMap);
+							API.sendWxMessage(appId, form.getOpenId(), "0ZAEDZBQ_LJyODOaSG1LEQZULkBe_gX6Rpf6YjgrOuA", page, form.getFormId(), dataMap);
 						} 
 					} 
 				});
@@ -165,7 +166,7 @@ public class Forg extends Controller{
 						String appId = Jws.configuration.getProperty("forg.appid");
 						FormIdsDDL form = FormIdService.getOneForm(appId, open_id);
 						if(form!=null){
-							API.sendWxMessage(appId, form.getOpenId(), "lmcSlxTF1wFlBBMkR4ucTLfNRFoLhLEFqiXp2PKjPSM", page, form.getFormId(), dataMap);
+							API.sendWxMessage(appId, form.getOpenId(), "pOYwTtS9FWwCZNh-l9VhsQxPiiLcWUVH_LmupVYW6Sg", page, form.getFormId(), dataMap);
 							Cache.set(key, "1","1h");
 						} 
 					} 
@@ -196,7 +197,7 @@ public class Forg extends Controller{
 			//
 			if(record){
 				//得到自己的录音，放在列表第一位置
-				ForgReadingRecordDDL selfRecord = ForgBoolRecordService.getByBookIdAndUid(bookId, user.getId().intValue());
+				ForgReadingRecordDDL selfRecord = ForgBookRecordService.getByBookIdAndUid(bookId, user.getId().intValue());
 				if(selfRecord!=null){
 					Map<String,Object> selfRecordMap = new HashMap<String,Object>();
 					selfRecordMap.put("id", selfRecord.getId());
@@ -219,7 +220,7 @@ public class Forg extends Controller{
  					result.put("selfRecord", selfRecordMap);
 				}
 				//
-				List<ForgReadingRecordDDL> otherRecords = ForgBoolRecordService.listOthers(bookId, user.getId().intValue(),shareUserId);
+				List<ForgReadingRecordDDL> otherRecords = ForgBookRecordService.listOthers(bookId, user.getId().intValue(),shareUserId);
 				List<Map<String,Object>> otherRecordsMap = new ArrayList<Map<String,Object>>();
 				if(otherRecords!=null && otherRecords.size()>0){
 					for(ForgReadingRecordDDL aRecord : otherRecords){
@@ -249,7 +250,7 @@ public class Forg extends Controller{
 			//得到分享用户的声音
 			if(shareUserId > 0){
 				//得到自己的录音，放在列表第一位置
-				ForgReadingRecordDDL shareRecord = ForgBoolRecordService.getByBookIdAndUid(bookId, shareUserId);
+				ForgReadingRecordDDL shareRecord = ForgBookRecordService.getByBookIdAndUid(bookId, shareUserId);
 				if(shareRecord!=null){
 					Map<String,Object> shareRecordMap = new HashMap<String,Object>();
 					shareRecordMap.put("id", shareRecord.getId());
@@ -444,11 +445,11 @@ public class Forg extends Controller{
 				throw new Exception("上传失败"+recordUrl);
 			}
 			
-			ForgReadingRecordDDL record = ForgBoolRecordService.getByBookIdAndUid(bookId, user.getId().intValue());
+			ForgReadingRecordDDL record = ForgBookRecordService.getByBookIdAndUid(bookId, user.getId().intValue());
 			if(record==null){
-				ForgBoolRecordService.create(bookId, user.getId().intValue(), recordUrl, user.getNickName(), user.getAvatarUrl(),recordTimingValue);
+				ForgBookRecordService.create(bookId, user.getId().intValue(), recordUrl, user.getNickName(), user.getAvatarUrl(),recordTimingValue);
 			}else{
-				ForgBoolRecordService.update(record, recordUrl,recordTimingValue);
+				ForgBookRecordService.update(record, recordUrl,recordTimingValue);
 			}
 			renderJSON(RtnUtil.returnSuccess("OK"));		
 		}catch(Exception e){
@@ -463,8 +464,10 @@ public class Forg extends Controller{
 			if(user==null){
 				renderJSON(RtnUtil.returnLoginFail());
 			}
-			int flows = ForgBoolRecordService.addFlow(recordId);
-			ForgReadingRecordDDL record = ForgBoolRecordService.get(recordId);
+			int flows = ForgBookRecordService.addFlow(recordId);
+			
+			ForgReadingRecordDDL record = ForgBookRecordService.get(recordId);
+			ForgBookRecordService.logFlowed(record.getUserId(), record.getBookId(), recordId, record.getAvatar(),record.getNickName());
 			//发微信消息
 			final CookBookUsersDDL flowedUser = UserService.get(record.getUserId());
 			final String open_id = flowedUser.getOpenId();
@@ -504,7 +507,7 @@ public class Forg extends Controller{
 					String appId = Jws.configuration.getProperty("forg.appid");
 					FormIdsDDL form = FormIdService.getOneForm(appId, open_id);
 					if(form!=null){
-						API.sendWxMessage(appId, form.getOpenId(), "lmcSlxTF1wFlBBMkR4ucTLfNRFoLhLEFqiXp2PKjPSM", page, form.getFormId(), dataMap);
+						API.sendWxMessage(appId, form.getOpenId(), "pOYwTtS9FWwCZNh-l9VhsQxPiiLcWUVH_LmupVYW6Sg", page, form.getFormId(), dataMap);
 						Cache.set(key, "1", "1h");
 					} 
 				} 
@@ -522,7 +525,7 @@ public class Forg extends Controller{
 			if(user==null){
 				renderJSON(RtnUtil.returnLoginFail());
 			}
-			int flows = ForgBoolRecordService.addPlayTimes(recordId);
+			int flows = ForgBookRecordService.addPlayTimes(recordId);
 			renderJSON(RtnUtil.returnSuccess("OK",flows));
 		}catch(Exception e){
 			Logger.error(e, e.getMessage());
@@ -551,23 +554,32 @@ public class Forg extends Controller{
 		}
 	}
 	
-	public static void getActivity(String session){
+	/**
+	 * 正在进行的活动
+	 * @param session
+	 */
+	public static void getActivity(String session,int actId){
 		try{ 
 			CookBookUsersDDL user = UserService.findBySession(session);
 			if(user==null){
 				renderJSON(RtnUtil.returnLoginFail());
 			}
-			ForgActivityDDL activity = ForgActivityService.getActivity();
-			if(activity == null ){
-				renderJSON(RtnUtil.returnSuccess("OK"));
-			}
+			
 			Map<String,Object> map = new HashMap<String,Object>();
 			map.put("closed", Boolean.valueOf(Jws.configuration.getProperty("activity.closed","true")));
+			
+			ForgActivityDDL activity = ForgActivityService.getActivityById(actId);
+			if(activity == null ){
+				renderJSON(RtnUtil.returnSuccess("OK",map));
+			}
+			
 			map.put("id", activity.getId());
 			map.put("title", activity.getActTitle());
-			map.put("startTime", DateUtil.format(activity.getStartTime()));
-			map.put("endTime", DateUtil.format(activity.getEndTime()));
-			
+			map.put("startTime", DateUtil.format(activity.getStartTime(),"yyyy-MM-dd"));
+			map.put("endTime", DateUtil.format(activity.getEndTime(),"yyyy-MM-dd"));
+			//活动是否进行中
+			map.put("status", activity.getEndTime()<=System.currentTimeMillis()?0:1);
+			map.put("prizeExamplePic",API.getAliOssAccessUrl("tasty", activity.getPrizeExamplePic(), 0));
 			List<String> descList = new ArrayList<String>();
 			if(!StringUtils.isEmpty(activity.getActDesc1())){
 				descList.add(activity.getActDesc1());
@@ -602,7 +614,86 @@ public class Forg extends Controller{
 			Logger.error(e, e.getMessage());
 			renderJSON(RtnUtil.returnFail(e.getMessage()));
 		}
-		
+	}
+	public static void listRank(String session,int actId){
+		try{ 
+			CookBookUsersDDL user = UserService.findBySession(session);
+			if(user==null){
+				renderJSON(RtnUtil.returnLoginFail());
+			}			
+			List<ForgActivityRankDDL> rankTop = new ArrayList<ForgActivityRankDDL>();
+			List<ForgActivityRankDDL> rankList = ForgActivityService.listActivityBank(actId,1, 50);
+			if(rankList!=null && rankList.size()>=1){
+				rankTop.add(rankList.get(0));
+			}
+			if(rankList!=null && rankList.size()>=2){
+				rankTop.add(rankList.get(1));
+			}
+			if(rankList!=null && rankList.size()>=3){
+				rankTop.add(rankList.get(2));
+			}
+			ForgActivityRankDDL selfRank = ForgActivityService.listActivityBankByUserId(actId, user.getId().intValue());
+			Map<String,Object> map = new HashMap<String,Object>();
+			map.put("rankTop", rankTop);
+			map.put("rankList", rankList);
+			map.put("selfRank", selfRank);
+			renderJSON(RtnUtil.returnSuccess("OK",map));
+		}catch(Exception e){
+			Logger.error(e, e.getMessage());
+			renderJSON(RtnUtil.returnFail(e.getMessage()));
+		}
+	}
+	/**
+	 * 正在进行的活动
+	 * @param session
+	 */
+	public static void listActivity(String session,int page,int pageSize){
+		try{ 
+			CookBookUsersDDL user = UserService.findBySession(session);
+			if(user==null){
+				renderJSON(RtnUtil.returnLoginFail());
+			}
+			List<ForgActivityDDL> activities = ForgActivityService.listActivity(page, pageSize);
+			if(activities == null || activities.size() == 0){
+				renderJSON(RtnUtil.returnSuccess("OK"));
+			}
+			List<Map<String,Object>> result = new ArrayList<Map<String,Object>>();
+			
+			for(ForgActivityDDL activity:activities){
+				Map<String,Object> map = new HashMap<String,Object>();
+				
+				map.put("join", 0);
+				ForgReadingRecordDDL record = ForgBookRecordService.getByBookIdAndUid(activity.getBookId(),user.getId().intValue());
+				if( record != null ){
+					map.put("join", 1);
+					map.put("flows", record.getFlows());
+				}
+				//活动是否结束0=已经结束，1=进行中
+				int status = 0;
+				if( activity.getStartTime() < System.currentTimeMillis() && activity.getEndTime() > System.currentTimeMillis()){
+					status = 1;					
+				}else if(activity.getRank() == 1){//排行榜已经生成
+					//出排行榜
+					//List<ForgActivityRankDDL> rankList = ForgActivityService.listActivityBank(activity.getId(),1, 50);
+					ForgActivityRankDDL selfRank = ForgActivityService.listActivityBankByUserId(activity.getId(),user.getId().intValue());
+					//map.put("rankList", rankList);
+					map.put("selfRank", selfRank);
+				}
+				map.put("rank", activity.getRank());
+				map.put("status", status);
+				map.put("bookId", activity.getBookId());
+				map.put("id", activity.getId());
+				map.put("cover", API.getAliOssAccessUrl("tasty", activity.getBookCover(), 0));
+				map.put("title", activity.getActTitle());
+				map.put("startTime", DateUtil.format(activity.getStartTime(),"yyyy-MM-dd"));
+				map.put("endTime", DateUtil.format(activity.getEndTime(),"yyyy-MM-dd"));
+				result.add(map);
+			} 
+			renderJSON(RtnUtil.returnSuccess("OK",result));
+		}catch(Exception e){
+			Logger.error(e, e.getMessage());
+			renderJSON(RtnUtil.returnFail(e.getMessage()));
+		}
 	}
 	
 	public static void getRecordUrl(int recordId,String session){
@@ -611,7 +702,7 @@ public class Forg extends Controller{
 			if(user==null){
 				renderJSON(RtnUtil.returnLoginFail());
 			} 
-			ForgReadingRecordDDL record = ForgBoolRecordService.get(recordId);
+			ForgReadingRecordDDL record = ForgBookRecordService.get(recordId);
 			String recordUrl = API.getAliOssAccessUrl("tasty", record.getRecordUrl(), 0);
 			renderJSON(RtnUtil.returnSuccess("OK",recordUrl));
 		}catch(Exception e){

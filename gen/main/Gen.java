@@ -26,7 +26,7 @@ public class Gen {
 	public class Config{
 		public static final String dbbase="cookbook_db";
 		//生成代码的表名
-		public static final String tableName = "forg_bainian_replay";
+		public static final String tableName = "forg_activity";
 		//workspace路径，如果是在相同工程运行，则可以不制定，默认是当前工作目录
 		public static final String workspace="";
 		//代码生成的路径，自动加上ddl，service，dao包名

@@ -221,5 +221,8 @@
   </config>  
   <config shard-type="none" source="mysql" class="modules.forg.ddl.ForgBainianCoverDDL" comment=""> 
     <map client="cookbook_db"/> 
+  </config>  
+  <config shard-type="none" source="mysql" class="modules.forg.ddl.ForgActivityRankDDL" comment=""> 
+    <map client="cookbook_db"/> 
   </config> 
 </configs>

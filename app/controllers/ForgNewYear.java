@@ -78,7 +78,7 @@ public class ForgNewYear extends Controller{
 					Map<String,Map> dataMap = new HashMap<String,Map>();
 					
 					Map<String,String> k1 = new HashMap<String,String>();
-					k1.put("value","新年祝福");
+					k1.put("value","2018元宵祝福");
 					k1.put("color", "#FF0000"); 
 				
 					Map<String,String> k2 = new HashMap<String,String>();
@@ -107,7 +107,7 @@ public class ForgNewYear extends Controller{
 					String appId = Jws.configuration.getProperty("forg.appid");
 					FormIdsDDL form = FormIdService.getOneForm(appId, sentUser.getOpenId());
 					if(form!=null){
-						API.sendWxMessage(appId, form.getOpenId(), "GGcGUJisZwfLmeZirYShti2EzBFxFkQAFRSIdftJf9w", page, form.getFormId(), dataMap);
+						API.sendWxMessage(appId, form.getOpenId(), "gEIMk_eCi7M3Ap5VVEh6MT5mEQ5th1JDhUeigIYQBTc", page, form.getFormId(), dataMap);
 						Cache.set(key, "1", "600s");
 					} 
 				} 
@@ -196,8 +196,7 @@ public class ForgNewYear extends Controller{
 			ForgBainianRecordDDL my = BainianService.getOneBainian(id); 
 			if(my == null){
 				renderJSON(RtnUtil.returnSuccess("OK",one));
-			}
-			
+			} 
 			
 			one.put("id", my.getId());
 			one.put("userId", my.getUserId());
@@ -227,7 +226,7 @@ public class ForgNewYear extends Controller{
 	
 	public static void getBgMusic(){
 		try {
-			String url  = API.getAliOssAccessUrl("tasty", "99c78ff55ea64a708cf35ec9aa7bf5fa", 0);
+			String url  = API.getAliOssAccessUrl("tasty", "ba05405266284f60870aa9710bf1cca1", 0);
 			renderJSON(RtnUtil.returnSuccess("OK",url));
 		} catch (Exception e) {
 			Logger.error(e, e.getMessage());
