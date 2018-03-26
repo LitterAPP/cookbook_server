@@ -20,10 +20,10 @@ public class Upload extends Controller{
 		FileChannel channel = null;  
         FileInputStream fs = null; 
 		try{ 
-			CookBookUsersDDL user = UserService.findBySession(session);
+			/*CookBookUsersDDL user = UserService.findBySession(session);
 			if(user==null){
 				renderJSON(RtnUtil.returnLoginFail());
-			}
+			}*/
 			if(file==null || !file.exists()){
 				renderJSON(RtnUtil.returnFail("文件不存在"));
 			}

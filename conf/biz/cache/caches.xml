@@ -63,7 +63,14 @@
     <cache enabled="true" prefix="ForgBainianReplayDDL_v1" class="modules.forg.ddl.ForgBainianReplayDDL" comment=""/>  
     <cache enabled="true" prefix="ForgBainianRecordDDL_v1" class="modules.forg.ddl.ForgBainianRecordDDL" comment=""/>  
     <cache enabled="true" prefix="ForgBainianCoverDDL_v1" class="modules.forg.ddl.ForgBainianCoverDDL" comment=""/>  
-    <cache enabled="true" prefix="ForgActivityRankDDL_v1" class="modules.forg.ddl.ForgActivityRankDDL" comment=""/> 
+    <cache enabled="true" prefix="ForgActivityRankDDL_v1" class="modules.forg.ddl.ForgActivityRankDDL" comment=""/>  
+    <cache enabled="true" prefix="ForgReadingRecordsDDL_v1" class="modules.forg.ddl.ForgReadingRecordsDDL" comment=""/>  
+    <cache enabled="true" prefix="ForgCollectDDL_v1" class="modules.forg.ddl.ForgCollectDDL" comment=""/>  
+    <cache enabled="true" prefix="ForgFollowDDL_v1" class="modules.forg.ddl.ForgFollowDDL" comment=""/>  
+    <cache enabled="true" prefix="ForgReadingCommentsDDL_v1" class="modules.forg.ddl.ForgReadingCommentsDDL" comment=""/>  
+    <cache enabled="true" prefix="ForgMiniAppDDL_v1" class="modules.forg.ddl.ForgMiniAppDDL" comment=""/>  
+    <cache enabled="true" prefix="ForgReadSpeedConfigDDL_v1" class="modules.forg.ddl.ForgReadSpeedConfigDDL" comment=""/>  
+    <cache prefix="ForgSuggestDDL_v1" comment="" class="modules.forg.ddl.ForgSuggestDDL" enabled="true"/>
   </row-cache>  
   <!-- List缓存: 基于sql语句的缓
               sql : sql语句

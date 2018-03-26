@@ -9,7 +9,7 @@ import jws.dal.common.DbType;
 /**
  * 
  * @author auto
- * @createDate 2018-01-26 12:44:17
+ * @createDate 2018-03-12 15:08:15
  **/
 @Table(name="forg_reading_content_shot")
 public class ForgReadingContentShotDDL{
@@ -51,6 +51,24 @@ public class ForgReadingContentShotDDL{
 		this.pageShot=pageShot;
 	}
 
+	@Column(name="read_time", type=DbType.Int)
+	private Integer readTime;
+	public Integer getReadTime() {
+		return readTime;
+	}
+	public void setReadTime(Integer readTime){
+		this.readTime=readTime;
+	}
+
+	@Column(name="word_count", type=DbType.Int)
+	private Integer wordCount;
+	public Integer getWordCount() {
+		return wordCount;
+	}
+	public void setWordCount(Integer wordCount){
+		this.wordCount=wordCount;
+	}
+
 	@Column(name="page_text", type=DbType.Varchar)
 	private String pageText;
 	public String getPageText() {
@@ -66,6 +84,8 @@ public class ForgReadingContentShotDDL{
 		object.setBookId(null);
 		object.setPageNum(null);
 		object.setPageShot(null);
+		object.setReadTime(null);
+		object.setWordCount(null);
 		object.setPageText(null);
 		return object;
 	}

@@ -219,4 +219,5 @@ public class GlobalConstants {
     }
     
     public static final String dbSource = "dbbase";
+    public static final String dbSoruceCook="cookbook_db";
 }

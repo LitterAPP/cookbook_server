@@ -24,7 +24,8 @@ public class ForgBookService {
 		book.setUploaderNickname(nickName);
 		book.setRecommed(0);
 		book.setMusicId(musicId==0?null:musicId);
-		return Dal.insertSelectLastId(book)   ;
+		book.setStatus(1);
+		return Dal.insertSelectLastId(book);
 	}
 	
 	public static void updateBook(int bookId,String bookName,String bookCover,String bookDesc,int musicId){

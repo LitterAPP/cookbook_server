@@ -26,7 +26,7 @@ public class Gen {
 	public class Config{
 		public static final String dbbase="cookbook_db";
 		//生成代码的表名
-		public static final String tableName = "forg_activity";
+		public static final String tableName = "forg_suggest";
 		//workspace路径，如果是在相同工程运行，则可以不制定，默认是当前工作目录
 		public static final String workspace="";
 		//代码生成的路径，自动加上ddl，service，dao包名
@@ -35,7 +35,7 @@ public class Gen {
 		public static final String url = "jdbc:mysql://121.42.61.154:3306/cook_book?user=cookbook&password=zxc123wenxy&useUnicode=true&characterEncoding=utf8";
 		public static final String driver = "com.mysql.jdbc.Driver";
 	}
-	 
+	
 	
 	public static void main(String[] args) throws SQLException {
 		Log.print("Gen Hello.");

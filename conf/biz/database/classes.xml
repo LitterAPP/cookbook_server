@@ -65,7 +65,14 @@
     <class name="ForgBainianReplayDDL" comment=""/>  
     <class name="ForgBainianRecordDDL" comment=""/>  
     <class name="ForgBainianCoverDDL" comment=""/>  
-    <class name="ForgActivityRankDDL" comment=""/> 
+    <class name="ForgActivityRankDDL" comment=""/>  
+    <class name="ForgReadingRecordsDDL" comment=""/>  
+    <class name="ForgCollectDDL" comment=""/>  
+    <class name="ForgFollowDDL" comment=""/>  
+    <class name="ForgReadingCommentsDDL" comment=""/>  
+    <class name="ForgMiniAppDDL" comment=""/>  
+    <class name="ForgReadSpeedConfigDDL" comment=""/>  
+    <class name="ForgSuggestDDL" comment=""/>
   </package>  
   <package name="modules.common.ddl"> 
     <class name="FormIdsDDL" comment=""/> 

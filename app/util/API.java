@@ -565,7 +565,7 @@ public class API {
 			System.out.println(key);
 		}*/
 		
-		String path = "C:\\Users\\fish\\Desktop\\青蛙读本\\xiaoqingwa.jpg";
+		String path = "C:\\Users\\fish\\Desktop\\青蛙读本\\logo.png";
 		String key = uploadToAliOss("tasty",new File(path));
 		System.out.println(key);
 		

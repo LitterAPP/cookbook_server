@@ -9,7 +9,7 @@ import jws.dal.common.DbType;
 /**
  * 
  * @author auto
- * @createDate 2018-02-02 10:48:44
+ * @createDate 2018-03-02 10:08:44
  **/
 @Table(name="forg_reading_books")
 public class ForgReadingBooksDDL{
@@ -105,6 +105,15 @@ public class ForgReadingBooksDDL{
 		this.flows=flows;
 	}
 
+	@Column(name="status", type=DbType.Int)
+	private Integer status;
+	public Integer getStatus() {
+		return status;
+	}
+	public void setStatus(Integer status){
+		this.status=status;
+	}
+
 	@Column(name="create_time", type=DbType.DateTime)
 	private Long createTime;
 	public Long getCreateTime() {
@@ -114,7 +123,6 @@ public class ForgReadingBooksDDL{
 		this.createTime=createTime;
 	}
 
-	public String createDate;
 	public static ForgReadingBooksDDL newExample(){
 		ForgReadingBooksDDL object=new ForgReadingBooksDDL();
 		object.setId(null);
@@ -127,6 +135,7 @@ public class ForgReadingBooksDDL{
 		object.setUploaderNickname(null);
 		object.setUploaderAvatar(null);
 		object.setFlows(null);
+		object.setStatus(null);
 		object.setCreateTime(null);
 		return object;
 	}

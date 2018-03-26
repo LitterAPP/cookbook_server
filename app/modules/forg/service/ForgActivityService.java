@@ -7,12 +7,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import jws.Jws;
 import jws.dal.Dal;
 import jws.dal.sqlbuilder.Condition;
 import jws.dal.sqlbuilder.Sort;
+import modules.common.ddl.FormIdsDDL;
+import modules.common.service.FormIdService;
+import modules.cookbook.ddl.CookBookUsersDDL;
+import modules.cookbook.service.UserService;
 import modules.forg.ddl.ForgActivityDDL;
 import modules.forg.ddl.ForgActivityRankDDL;
 import modules.forg.ddl.ForgRecordFlowDDL;
+import util.API;
+import util.ThreadUtil;
 
 public class ForgActivityService {
 
@@ -95,8 +102,34 @@ public class ForgActivityService {
 				return o2.getFlows() - o1.getFlows();
 			}});
 		int rankNum = 1;
+		
 		for(ForgActivityRankDDL rank : rankList){
-			rank.setRank(rankNum); 
+			rank.setRank(rankNum); 			
+			//获奖通知
+			Map<String,Map> dataMap = new HashMap<String,Map>();
+			
+			Map<String,String> k1 = new HashMap<String,String>();
+			k1.put("value",activity.getActTitle());
+			k1.put("color", "#121212"); 
+		
+			Map<String,String> k2 = new HashMap<String,String>();
+			k2.put("value", "您在比赛中以"+rank.getFlows()+"赞，获得第"+rank.getRank());
+			k2.put("color", "#FFD700");
+			
+			dataMap.put("keyword1", k1);
+			dataMap.put("keyword2", k2); 
+			
+			String page = "/pages/activity/rank?actId="+activity.getId();
+			
+			String appId = Jws.configuration.getProperty("forg.appid");
+			int userId = rank.getUserId();
+			CookBookUsersDDL user = UserService.get(userId);
+			if(user !=null){
+				FormIdsDDL form = FormIdService.getOneForm(appId,user.getOpenId());
+				if(form!=null){
+					API.sendWxMessage(appId, form.getOpenId(), "yXZjl7DCziOXBbki48q8DHX3TkJfgjg2uXRuUrYo2zs", page, form.getFormId(), dataMap);
+				}
+			} 
 			rankNum++;
 		}
 		Dal.replaceMulti(rankList); 

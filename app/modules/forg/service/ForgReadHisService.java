@@ -1,6 +1,10 @@
 package modules.forg.service;
 
+import java.util.List;
+
 import jws.dal.Dal;
+import jws.dal.sqlbuilder.Condition;
+import jws.dal.sqlbuilder.Sort;
 import modules.cookbook.ddl.CookBookUsersDDL;
 import modules.forg.ddl.ForgReadingBooksDDL;
 import modules.forg.ddl.ForgReadingHistoryDDL;
@@ -16,5 +20,15 @@ public class ForgReadHisService {
 		his.setReadTime(System.currentTimeMillis());
 		his.setUserId(user.getId().intValue());
 		Dal.replace(his);
+	}
+	
+	public static List<ForgReadingHistoryDDL> listMyLines(int userId,int page,int pageSize){
+		Condition condition = new Condition("ForgReadingHistoryDDL.userId","=",userId);
+		return Dal.select("ForgReadingHistoryDDL.*", condition,  new Sort("ForgReadingHistoryDDL.id",false), (page-1)*pageSize, pageSize);
+	}
+	
+	public static int countRead(int userId){
+		Condition condition = new Condition("ForgReadingHistoryDDL.userId","=",userId);
+		return Dal.count(condition);
 	}
 }

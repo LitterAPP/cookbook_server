@@ -224,5 +224,26 @@
   </config>  
   <config shard-type="none" source="mysql" class="modules.forg.ddl.ForgActivityRankDDL" comment=""> 
     <map client="cookbook_db"/> 
-  </config> 
+  </config>  
+  <config shard-type="none" source="mysql" class="modules.forg.ddl.ForgReadingRecordsDDL" comment=""> 
+    <map client="cookbook_db"/> 
+  </config>  
+  <config shard-type="none" source="mysql" class="modules.forg.ddl.ForgCollectDDL" comment=""> 
+    <map client="cookbook_db"/> 
+  </config>  
+  <config shard-type="none" source="mysql" class="modules.forg.ddl.ForgFollowDDL" comment=""> 
+    <map client="cookbook_db"/> 
+  </config>  
+  <config shard-type="none" source="mysql" class="modules.forg.ddl.ForgReadingCommentsDDL" comment=""> 
+    <map client="cookbook_db"/> 
+  </config>  
+  <config shard-type="none" source="mysql" class="modules.forg.ddl.ForgMiniAppDDL" comment=""> 
+    <map client="cookbook_db"/> 
+  </config>  
+  <config shard-type="none" source="mysql" class="modules.forg.ddl.ForgReadSpeedConfigDDL" comment=""> 
+    <map client="cookbook_db"/> 
+  </config>  
+  <config shard-type="none" comment="" source="mysql" class="modules.forg.ddl.ForgSuggestDDL">
+    <map client="cookbook_db"/>
+  </config>
 </configs>

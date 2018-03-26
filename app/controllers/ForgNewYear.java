@@ -29,7 +29,6 @@ import util.ThreadUtil;
  *
  */
 public class ForgNewYear extends Controller{ 
-	
 	 
 	
 	public static void isOpen(){
@@ -59,21 +58,16 @@ public class ForgNewYear extends Controller{
 		try{   
 			final CookBookUsersDDL user = UserService.findBySession(session);
 			if(user==null){
-				renderJSON(RtnUtil.returnLoginFail());
+				//renderJSON(RtnUtil.returnLoginFail());
 			} 
 			if(StringUtils.isEmpty(ossKey) || ossKey.equals("null") || ossKey.equals("undefined")){
 				throw new Exception("上传失败");
 			}
-			BainianService.addReplay(recordId, ossKey, user.getAvatarUrl(), user.getNickName());
+			BainianService.addReplay(recordId, ossKey, user==null?API.getAliOssAccessUrl("tasty", "eefafe56d06240f4a33d1ae3269886bf", 0):user.getAvatarUrl(), user==null?"匿名用户":user.getNickName());
 			
 			ThreadUtil.sumbit(new Runnable(){ 
 				@Override
 				public void run() { 
-					
-					String key = "HappyNewYear_"+recordId+"_"+user.getOpenId();
-					if(null != Cache.get(key)){
-						return;
-					}
 					
 					Map<String,Map> dataMap = new HashMap<String,Map>();
 					
@@ -86,7 +80,7 @@ public class ForgNewYear extends Controller{
 					k2.put("color", "#FFA500");
 					
 					Map<String,String> k3 = new HashMap<String,String>();
-					k3.put("value", "福到，财到！我给您送福了，来听听吧~");
+					k3.put("value", "福到，财到！有人给您送福了，来听听吧~");
 					k3.put("color", "#FF0000");
 					
 					Map<String,String> k4 = new HashMap<String,String>();
@@ -108,7 +102,6 @@ public class ForgNewYear extends Controller{
 					FormIdsDDL form = FormIdService.getOneForm(appId, sentUser.getOpenId());
 					if(form!=null){
 						API.sendWxMessage(appId, form.getOpenId(), "gEIMk_eCi7M3Ap5VVEh6MT5mEQ5th1JDhUeigIYQBTc", page, form.getFormId(), dataMap);
-						Cache.set(key, "1", "600s");
 					} 
 				} 
 			});
@@ -124,7 +117,7 @@ public class ForgNewYear extends Controller{
 		try{   
 			CookBookUsersDDL user = UserService.findBySession(session);
 			if(user==null){
-				renderJSON(RtnUtil.returnLoginFail());
+				//renderJSON(RtnUtil.returnLoginFail());
 			}
 			List<Map<String,Object>> list = new ArrayList<Map<String,Object>>();
 			List<ForgBainianCoverDDL> templates = BainianService.listTemplate();
@@ -188,10 +181,10 @@ public class ForgNewYear extends Controller{
 	
 	public static void getOneBainian(String session,int id){
 		try{   
-			CookBookUsersDDL user = UserService.findBySession(session);
+			/*CookBookUsersDDL user = UserService.findBySession(session);
 			if(user==null){
 				renderJSON(RtnUtil.returnLoginFail());
-			}   
+			} */  
 			Map<String,Object> one = new HashMap<String,Object>();
 			ForgBainianRecordDDL my = BainianService.getOneBainian(id); 
 			if(my == null){
