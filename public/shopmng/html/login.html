@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>登录商铺管理后台</title>
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <link type="text/css" rel="styleSheet"  href="../css/login.css" />
+</head>
+<body>
+<div id='container' class="container">
+    <div class="login-title">登录</div>
+    <div>
+        <input v-model="userName"  type="text" placeholder="用户名">
+    </div>
+    <div>
+        <input  v-model="password"   type="password" placeholder="密码">
+    </div>
+
+    <div v-cloak v-if="errorMsg" style="font-size: 16px;color:#fff;">
+        {{errorMsg}}
+    </div>
+
+    <div>
+        <button v-if="logining">登录中...</button>
+        <button v-else @click="login">登录</button>
+    </div>
+</div>
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+<script src="../js/config.js"></script>
+<script src="../js/login.js"></script>
+</body>
+</html>

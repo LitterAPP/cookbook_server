@@ -1,0 +1,26 @@
+body{
+    margin: auto;
+}
+.nav{
+
+}
+.item{
+    text-align: left;
+    padding-left: 10px;
+    height: 35px;
+    line-height: 35px;
+    cursor: Pointer;
+    border-bottom: 1px solid #EBEBEB;
+    font-size: 15px;
+}
+.item:hover{
+   background: #EBEBEB;
+}
+.activite{
+    color:#FF7256;
+    background: #EBEBEB;
+    font-weight: bold;
+}
+[v-cloak] {
+    display: none;
+}

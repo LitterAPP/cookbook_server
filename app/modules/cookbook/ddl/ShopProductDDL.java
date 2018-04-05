@@ -9,7 +9,7 @@ import jws.dal.common.DbType;
 /**
  * 
  * @author auto
- * @createDate 2017-12-26 16:52:14
+ * @createDate 2018-03-28 16:46:09
  **/
 @Table(name="shop_product")
 public class ShopProductDDL{
@@ -249,6 +249,42 @@ public class ShopProductDDL{
 		this.productType=productType;
 	}
 
+	@Column(name="pv", type=DbType.Int)
+	private Integer pv;
+	public Integer getPv() {
+		return pv;
+	}
+	public void setPv(Integer pv){
+		this.pv=pv;
+	}
+
+	@Column(name="deal", type=DbType.Int)
+	private Integer deal;
+	public Integer getDeal() {
+		return deal;
+	}
+	public void setDeal(Integer deal){
+		this.deal=deal;
+	}
+
+	@Column(name="is_hot", type=DbType.Int)
+	private Integer isHot;
+	public Integer getIsHot() {
+		return isHot;
+	}
+	public void setIsHot(Integer isHot){
+		this.isHot=isHot;
+	}
+
+	@Column(name="is_sale", type=DbType.Int)
+	private Integer isSale;
+	public Integer getIsSale() {
+		return isSale;
+	}
+	public void setIsSale(Integer isSale){
+		this.isSale=isSale;
+	}
+
 	public static ShopProductDDL newExample(){
 		ShopProductDDL object=new ShopProductDDL();
 		object.setId(null);
@@ -277,6 +313,10 @@ public class ShopProductDDL{
 		object.setSellerTelNumber(null);
 		object.setSellerWxNumber(null);
 		object.setProductType(null);
+		object.setPv(null);
+		object.setDeal(null);
+		object.setIsHot(null);
+		object.setIsSale(null);
 		return object;
 	}
 }

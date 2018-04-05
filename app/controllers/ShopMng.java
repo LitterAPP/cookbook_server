@@ -14,10 +14,13 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import controllers.dto.ProductInfoDto;
+import controllers.dto.ProductInfoDto.Category;
 import controllers.dto.ProductInfoDto.Group;
 import controllers.dto.ProductInfoDto.Image;
 import controllers.dto.ProductInfoDto.TextDetail;
 import controllers.dto.ProductInfoDto.TogetherInfo;
+import controllers.dto.SelectSourceDto;
+import dto.shop.ShopIndexDto;
 import jws.Logger;
 import jws.dal.Dal;
 import jws.dal.sqlbuilder.Condition;
@@ -27,6 +30,7 @@ import modules.cookbook.ddl.CookBookUsersDDL;
 import modules.cookbook.ddl.ShopApplyInfoDDL;
 import modules.cookbook.ddl.ShopExpressCodeDDL;
 import modules.cookbook.ddl.ShopExpressDDL;
+import modules.cookbook.ddl.ShopMngSessionDDL;
 import modules.cookbook.ddl.ShopOrderDDL;
 import modules.cookbook.ddl.ShopProductAttrDDL;
 import modules.cookbook.ddl.ShopProductAttrRelDDL;
@@ -39,6 +43,8 @@ import modules.cookbook.ddl.ShopProductImagesDDL;
 import modules.cookbook.service.ApplyService;
 import modules.cookbook.service.ShopCategoryService;
 import modules.cookbook.service.ShopExpressService;
+import modules.cookbook.service.ShopIndexService;
+import modules.cookbook.service.ShopMngService;
 import modules.cookbook.service.ShopOrderService;
 import modules.cookbook.service.ShopProductAttrService;
 import modules.cookbook.service.ShopProductGroupService;
@@ -235,6 +241,12 @@ public class ShopMng extends Controller{
 		}
 	}
 	
+	/**
+	 * 旧的查询接口,废弃
+	 * @param session
+	 * @param productId
+	 */
+	
 	public static void findProduct(String session,String productId){
 		try{
 			CookBookUsersDDL user = UserService.findBySession(session);
@@ -252,7 +264,7 @@ public class ShopMng extends Controller{
 			ProductInfoDto dto = new ProductInfoDto();
 			
 			Image banner = new ProductInfoDto().new Image();			
-			banner.remoteUrl =  API.getAliOssAccessUrl("tasty", product.getProductBanner(), 0);
+			banner.remoteUrl =  API.getObjectAccessUrlSimple( product.getProductBanner());
 			dto.banner_pic = banner;
 			
  			dto.contact_mobile = product.getSellerTelNumber();
@@ -288,7 +300,7 @@ public class ShopMng extends Controller{
 			List<ShopProductGroupDDL> groups = ShopProductGroupService.findByProductId(productId);
 			for(ShopProductGroupDDL g : groups){
 				Group group = new ProductInfoDto().new Group();
-				group.remoteUrl = API.getAliOssAccessUrl("tasty", g.getGroupImage(), 0);
+				group.remoteUrl = API.getObjectAccessUrlSimple( g.getGroupImage());
 				group.osskey = g.getGroupImage();
 				group.price1 = String.valueOf(AmountUtil.f2y( g.getGroupPrice()));
 				group.price2 = String.valueOf(AmountUtil.f2y( g.getGroupTogetherPrice()));
@@ -305,7 +317,7 @@ public class ShopMng extends Controller{
 			List<ShopProductImagesDDL> plays = ShopProductImageService.listImages(productId, ShopProductImageService.SCREENSHOT_TYPE, 0, 6);
 			for(ShopProductImagesDDL img : plays){
 				Image ig = new ProductInfoDto().new Image();
-				ig.remoteUrl = API.getAliOssAccessUrl("tasty", img.getImageKey(), 0);
+				ig.remoteUrl = API.getObjectAccessUrlSimple( img.getImageKey());
 				playList.add(ig);  
 			}
 			dto.play_pics = playList;
@@ -315,7 +327,7 @@ public class ShopMng extends Controller{
 			if(details!=null && details.size()>0){
 				for(ShopProductImagesDDL img : details){
 					Image ig = new ProductInfoDto().new Image();
-					ig.remoteUrl = API.getAliOssAccessUrl("tasty", img.getImageKey(), 0);
+					ig.remoteUrl = API.getObjectAccessUrlSimple( img.getImageKey());
 					detailPicsList.add(ig); 
 				}
 			}
@@ -442,8 +454,8 @@ public class ShopMng extends Controller{
 				renderJSON(RtnUtil.returnSuccess("ok",result));
 			}			
 			result.put("isSeller", true);
-			result.put("backCardUrl",API.getAliOssAccessUrl("tasty", applyInfo.getBackCardKey(), 0));
-			result.put("frontCardUrl",API.getAliOssAccessUrl("tasty", applyInfo.getFrontCardKey(), 0));
+			result.put("backCardUrl",API.getObjectAccessUrlSimple( applyInfo.getBackCardKey()));
+			result.put("frontCardUrl",API.getObjectAccessUrlSimple( applyInfo.getFrontCardKey()));
 			result.put("mobile", applyInfo.getMobile());
 			result.put("wx", applyInfo.getWx());
 			renderJSON(RtnUtil.returnSuccess("ok",result));
@@ -485,4 +497,330 @@ public class ShopMng extends Controller{
 			renderJSON(RtnUtil.returnFail("服务器异常"));
 		}
 	}
+	
+	public static void categoryALL(){
+		try{
+			SelectSourceDto selectSource = new SelectSourceDto();
+			selectSource.selected="";
+			
+ 			List<ShopProductCategoryDDL> pList = ShopCategoryService.searchByPCategoryName(null);
+			if(pList!=null && pList.size()>0){
+				for(ShopProductCategoryDDL pcat : pList){
+					
+					SelectSourceDto.Soruce source = new  SelectSourceDto().new Soruce(); 
+					source.value = pcat.getCategoryId();
+					source.text = pcat.getCategoryName(); 
+					
+ 					List<ShopProductCategoryChildDDL> childCats = ShopCategoryService.listByParentId(pcat.getCategoryId());
+					if(childCats!=null && childCats.size()>0){		
+						SelectSourceDto subSelectSource = new SelectSourceDto();
+						for(ShopProductCategoryChildDDL child : childCats){							
+							subSelectSource.selected="0";
+							SelectSourceDto.Soruce subSource = new  SelectSourceDto().new Soruce(); 
+							subSource.value = child.getCategoryId();
+							subSource.text = child.getCategoryName();  
+							subSelectSource.options.add(subSource); 
+						}
+						source.subCategory = subSelectSource;
+					} 
+					selectSource.options.add(source);
+				}
+			}
+			renderJSON(RtnUtil.returnSuccess("OK", selectSource));
+		}catch(Exception e){
+			Logger.error(e, e.getMessage());
+			renderJSON(RtnUtil.returnFail("服务器异常"));
+		}
+	}
+	
+	public static void loginMng(String userName,String password){
+		try{
+			if(StringUtils.isEmpty(userName) || StringUtils.isEmpty(password)){
+				renderJSON(RtnUtil.returnFail("用户或密码不正确"));
+			}
+			ShopMngSessionDDL session = ShopMngService.login(userName, password);
+			if(session!=null){
+				response.setCookie("shop_sid", session.getSession(), null, null,6*60*60, false, true);
+				renderJSON(RtnUtil.returnSuccess("OK", session));
+			}else{
+				renderJSON(RtnUtil.returnFail("用户或密码不正确"));
+			}
+		}catch(Exception e){
+			Logger.error(e, e.getMessage());
+			renderJSON(RtnUtil.returnFail("服务器异常"));
+		}
+	}
+	
+	public static void checkSession(){
+		try{
+			if(request.cookies==null || !request.cookies.containsKey("shop_sid")){
+				renderJSON(RtnUtil.returnFail("未登录"));
+			}
+			String sessionStr = request.cookies.get("shop_sid").value;
+			ShopMngSessionDDL session = ShopMngService.checkSession(sessionStr);
+			if(session!=null){				 
+				renderJSON(RtnUtil.returnSuccess("OK", session));
+			}else{
+				renderJSON(RtnUtil.returnFail("未登录"));
+			}
+		}catch(Exception e){
+			Logger.error(e, e.getMessage());
+			renderJSON(RtnUtil.returnFail("服务器异常"));
+		}
+	}
+	
+	public static void quitLogin(){
+		try{
+			if(request.cookies==null || !request.cookies.containsKey("shop_sid")){
+				renderJSON(RtnUtil.returnSuccess("OK"));
+			}
+			response.setCookie("shop_sid", "", null, null,0, false, true);
+			renderJSON(RtnUtil.returnSuccess("OK"));
+		}catch(Exception e){
+			Logger.error(e, e.getMessage());
+			renderJSON(RtnUtil.returnFail("服务器异常"));
+		}
+	}
+	
+	public static void saveShopIndex(){
+		try{
+			if(request.cookies==null || !request.cookies.containsKey("shop_sid")){
+				renderJSON(RtnUtil.returnFail("未登录"));
+			}			
+			String sessionStr = request.cookies.get("shop_sid").value;
+			ShopMngSessionDDL session = ShopMngService.checkSession(sessionStr);
+			if(session==null){				 
+				renderJSON(RtnUtil.returnFail("未登录"));
+			}
+			String bodyStr = Http.Request.current().params.get("body");			
+			String decodeBodyStr = URLDecoder.decode(bodyStr, "utf-8");	 
+
+			Logger.info("解析店铺配置，%s", decodeBodyStr);
+			ShopIndexDto index = gson.fromJson(decodeBodyStr, ShopIndexDto.class);
+			if(ShopIndexService.update(index.shopId, index.shopName, index.shopAvatarKey,decodeBodyStr)){
+				renderJSON(RtnUtil.returnSuccess("OK"));
+			}
+			Logger.info("解析店铺配置完成，%s", decodeBodyStr);
+			renderJSON(RtnUtil.returnFail("商铺配置失败"));
+		}catch(Exception e){
+			Logger.error(e, e.getMessage());
+			renderJSON(RtnUtil.returnFail("服务器异常"));
+		}
+	}
+	
+	/**
+	 * 店铺后台
+	 */
+	public static void saveProductInfo(){
+		try{
+			if(request.cookies==null || !request.cookies.containsKey("shop_sid")){
+				renderJSON(RtnUtil.returnFail("未登录"));
+			}			
+			String sessionStr = request.cookies.get("shop_sid").value;
+			ShopMngSessionDDL session = ShopMngService.checkSession(sessionStr);
+			if(session==null){				 
+				renderJSON(RtnUtil.returnFail("未登录"));
+			}
+			String bodyStr = Http.Request.current().params.get("body");			
+			String decodeBodyStr = URLDecoder.decode(bodyStr, "utf-8");	 
+
+			Logger.info("解析商品数据，%s", decodeBodyStr);
+			ProductInfoDto product = gson.fromJson(decodeBodyStr, ProductInfoDto.class);
+			
+			String productId = ShopProductService.saveProductInfo(product);
+			Map<String,Object> result = new HashMap<String,Object>();
+			result.put("productId",productId);
+			Logger.info("解析商品数据完成，%s", decodeBodyStr);
+			
+			renderJSON(RtnUtil.returnSuccess("OK", result));
+		}catch(Exception e){
+			Logger.error(e, e.getMessage());
+			renderJSON(RtnUtil.returnFail("服务器异常"));
+		}
+	}
+	/**
+	 * PC后台查商品
+	 * @param productId
+	 */
+	public static void getOneProduct(String productId){
+		try{
+			
+			if(request.cookies==null || !request.cookies.containsKey("shop_sid")){
+				renderJSON(RtnUtil.returnFail("未登录"));
+			}			
+			String sessionStr = request.cookies.get("shop_sid").value;
+			ShopMngSessionDDL session = ShopMngService.checkSession(sessionStr);
+			if(session==null){				 
+				renderJSON(RtnUtil.returnFail("未登录"));
+			} 
+			 
+			ShopProductDDL product = ShopProductService.getByProductId(productId);			
+ 			//组装商品信息
+			ProductInfoDto dto = new ProductInfoDto();
+			dto.isHot = product.getIsHot()==1?true:false;
+			dto.isSale = product.getIsSale()==1?true:false;
+			
+			Image banner = new ProductInfoDto().new Image();			
+			banner.remoteUrl =  API.getObjectAccessUrlSimple(product.getProductBanner());
+			banner.osskey = product.getProductBanner();
+			dto.banner_pic = banner;
+			
+ 			dto.contact_mobile = product.getSellerTelNumber();
+			dto.contact_wx = product.getSellerWxNumber();
+			
+			dto.join_together = (product.getJoinTogether()!=null && product.getJoinTogether()==1)?true:false;
+			dto.price[0] = String.valueOf(AmountUtil.f2y(product.getProductOriginAmount()));
+			dto.price[1] = String.valueOf(AmountUtil.f2y(product.getProductNowAmount()));
+			dto.productId = product.getProductId();
+			dto.productType = product.getProductType();
+			dto.store = product.getStore();
+			dto.title = product.getProductName();
+			//处理团信息
+			if(dto.join_together ){
+				TogetherInfo tinfo = new ProductInfoDto().new TogetherInfo();
+				tinfo.hour = product.getTogetherExpirHour();
+				tinfo.num = product.getTogetherNumber();
+				tinfo.price = String.valueOf(AmountUtil.f2y( product.getProductTogetherAmount()));
+				tinfo.vcount = product.getTogetherSales();
+				dto.together_info = tinfo;
+			}
+			//处理商品详情
+			List<TextDetail> textDetails = new ArrayList<TextDetail>();
+			if(!StringUtils.isEmpty(product.getProductDesc())){
+				for(String desc : product.getProductDesc().split("`")){
+					TextDetail text = new ProductInfoDto().new TextDetail();
+					text.value = desc;
+					textDetails.add(text);
+				}
+			}
+			dto.text_details = textDetails;
+			//处理商品组
+			List<Group> groupList = new ArrayList<Group>();
+			List<ShopProductGroupDDL> groups = ShopProductGroupService.findByProductId(productId);
+			 
+			for(ShopProductGroupDDL g : groups){
+				//过滤默认的商品分组数据
+				if(g.getOrderBy() == 0){
+					continue;
+				}
+				Group group = new ProductInfoDto().new Group();
+				group.remoteUrl = API.getObjectAccessUrlSimple(g.getGroupImage());
+				group.osskey = g.getGroupImage();
+				group.price1 = String.valueOf(AmountUtil.f2y( g.getGroupPrice()));
+				group.price2 = String.valueOf(AmountUtil.f2y( g.getGroupTogetherPrice()));
+				group.title = g.getGroupName();
+				groupList.add(group);
+			}
+			dto.groups = groupList;
+			//处理分类
+			List<Category> selectedCategoryParams = new ArrayList<Category>();
+			List<ShopProductCategoryRelDDL> categoryRelList = ShopCategoryService.listByProductId(productId);
+			if(categoryRelList!=null && categoryRelList.size()>0){
+				for(ShopProductCategoryRelDDL rel : categoryRelList){
+					Category categroy = new ProductInfoDto().new Category();
+					categroy.pCategoryId = rel.getPCategoryId();
+					categroy.subCategoryId = rel.getSubCategoryId();
+					selectedCategoryParams.add(categroy);
+				}
+			}
+			dto.selectedCategoryParams = selectedCategoryParams;
+			 
+			
+			//处理轮播图片
+			List<Image> playList = new ArrayList<Image>();
+			List<ShopProductImagesDDL> plays = ShopProductImageService.listImages(productId, ShopProductImageService.SCREENSHOT_TYPE, 0, 6);
+			for(ShopProductImagesDDL img : plays){
+				Image ig = new ProductInfoDto().new Image();
+				ig.remoteUrl = API.getObjectAccessUrlSimple(img.getImageKey());
+				ig.osskey=img.getImageKey();
+				playList.add(ig);  
+			}
+			dto.play_pics = playList;
+			//处理详情图片
+			List<Image> detailPicsList = new ArrayList<Image>();
+			List<ShopProductImagesDDL> details = ShopProductImageService.listImages(productId, ShopProductImageService.DETAIL_TYPE, 0, 12);
+			if(details!=null && details.size()>0){
+				for(ShopProductImagesDDL img : details){
+					Image ig = new ProductInfoDto().new Image();
+					ig.remoteUrl = API.getObjectAccessUrlSimple(img.getImageKey());
+					ig.osskey = img.getImageKey();
+					detailPicsList.add(ig); 
+				}
+			}
+			dto.pic_details = detailPicsList;	
+			//处理属性
+			List<String> selectedAttrs = new ArrayList<String>();
+			List<ShopProductAttrRelDDL> attrs = ShopProductAttrService.listByProduct(productId);
+			if(attrs!=null && attrs.size() > 0){
+				for(ShopProductAttrRelDDL attr : attrs){
+					selectedAttrs.add(attr.getAttrName());
+				}
+			}
+			dto.selectedAttrs = selectedAttrs;
+			 
+			Logger.info("查询商品结果：%s", gson.toJson(dto));
+			renderJSON(RtnUtil.returnSuccess("ok",dto));
+		}catch(Exception e){
+			Logger.error(e, e.getMessage());
+			renderJSON(RtnUtil.returnFail(e.getMessage()));
+		}
+	}
+	
+	public static void operatedProduct(int flag,String productIds){
+		try{
+			if(request.cookies==null || !request.cookies.containsKey("shop_sid")){
+				renderJSON(RtnUtil.returnFail("未登录"));
+			}			
+			String sessionStr = request.cookies.get("shop_sid").value;
+			ShopMngSessionDDL session = ShopMngService.checkSession(sessionStr);
+			if(session==null){				 
+				renderJSON(RtnUtil.returnFail("未登录"));
+			}
+			
+			if(StringUtils.isEmpty(productIds)){
+				renderJSON(RtnUtil.returnFail("商品id参数非法"));
+			}
+			
+			for(String productId : productIds.split(",")){
+				ShopProductDDL product = ShopProductService.getByProductId(productId);
+				if(product==null){
+					renderJSON(RtnUtil.returnFail("商品不存在"));
+				} 
+				
+				if(flag==1){
+					if(product.getStatus() == ShopProductService.Status.PRODUCT_STATUS_SELL.getValue()){
+						ShopProductService.updateStatus(productId, ShopProductService.Status.PRODUCT_STATUS_UNSELL.getValue());
+					}else if(product.getStatus() != ShopProductService.Status.PRODUCT_STATUS_SELL.getValue()){
+						ShopProductService.updateStatus(productId, ShopProductService.Status.PRODUCT_STATUS_SELL.getValue());
+					}
+					renderJSON(RtnUtil.returnSuccess("OK"));
+				}
+				if(flag==2){
+					if(product.getIsHot() == 1){
+						product.setIsHot(0);
+					}else{
+						product.setIsHot(1);
+					}
+					ShopProductService.updateHot(product);
+					renderJSON(RtnUtil.returnSuccess("OK"));
+				}
+				if(flag==3){
+					if(product.getIsSale() == 1){
+						product.setIsSale(0);
+					}else{
+						product.setIsSale(1);
+					}
+					ShopProductService.updateSale(product);
+					renderJSON(RtnUtil.returnSuccess("OK"));
+				}
+			}
+			
+			
+			
+		}catch(Exception e){
+			Logger.error(e, e.getMessage());
+			renderJSON(RtnUtil.returnFail("服务器异常"));
+		}
+	}
+	
 }

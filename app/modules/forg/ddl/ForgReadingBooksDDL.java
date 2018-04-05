@@ -9,7 +9,7 @@ import jws.dal.common.DbType;
 /**
  * 
  * @author auto
- * @createDate 2018-03-02 10:08:44
+ * @createDate 2018-03-27 11:51:35
  **/
 @Table(name="forg_reading_books")
 public class ForgReadingBooksDDL{
@@ -58,6 +58,15 @@ public class ForgReadingBooksDDL{
 	}
 	public void setRecommed(Integer recommed){
 		this.recommed=recommed;
+	}
+
+	@Column(name="type", type=DbType.Int)
+	private Integer type;
+	public Integer getType() {
+		return type;
+	}
+	public void setType(Integer type){
+		this.type=type;
 	}
 
 	@Column(name="music_id", type=DbType.Int)
@@ -130,6 +139,7 @@ public class ForgReadingBooksDDL{
 		object.setBookCover(null);
 		object.setBookDesc(null);
 		object.setRecommed(null);
+		object.setType(null);
 		object.setMusicId(null);
 		object.setUploaderUid(null);
 		object.setUploaderNickname(null);

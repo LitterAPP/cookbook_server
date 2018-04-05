@@ -12,7 +12,7 @@ import modules.forg.ddl.ForgReadingBooksDDL;
 
 public class ForgBookService {
 	
-	public static long createBook(String bookName,String bookCover,String bookDesc,String nickName,String avatar,int userId,int musicId){
+	public static long createBook(String bookName,String bookCover,String bookDesc,String nickName,String avatar,int userId,int musicId,int type){
 		ForgReadingBooksDDL book = new ForgReadingBooksDDL();
 		book.setBookCover(bookCover);
 		book.setBookDesc(bookDesc);
@@ -22,19 +22,21 @@ public class ForgBookService {
 		book.setUploaderAvatar(avatar);
 		book.setUploaderUid(userId);
 		book.setUploaderNickname(nickName);
-		book.setRecommed(0);
+		book.setRecommed(userId==1789?1:0);
 		book.setMusicId(musicId==0?null:musicId);
 		book.setStatus(1);
+		book.setType(type);
 		return Dal.insertSelectLastId(book);
 	}
 	
-	public static void updateBook(int bookId,String bookName,String bookCover,String bookDesc,int musicId){
+	public static void updateBook(int bookId,String bookName,String bookCover,String bookDesc,int musicId,int type){
 		ForgReadingBooksDDL book = get(bookId);
 		book.setBookCover(bookCover);
 		book.setBookDesc(bookDesc);
 		book.setBookName(bookName); 	
 		book.setMusicId(musicId);
-		Dal.update(book, "ForgReadingBooksDDL.bookCover,ForgReadingBooksDDL.musicId,ForgReadingBooksDDL.bookName,ForgReadingBooksDDL.bookDesc",
+		book.setType(type);
+		Dal.update(book, "ForgReadingBooksDDL.type,ForgReadingBooksDDL.bookCover,ForgReadingBooksDDL.musicId,ForgReadingBooksDDL.bookName,ForgReadingBooksDDL.bookDesc",
 				new Condition("ForgReadingBooksDDL.id","=",bookId));
 	}
 	
@@ -55,7 +57,7 @@ public class ForgBookService {
 		return Dal.select("ForgReadingBooksDDL.*", bookId);
 	}
 	
-	public static List<ForgReadingBooksDDL> listRecommendBooks(int top){
+	/*public static List<ForgReadingBooksDDL> listRecommendBooks(int top){
 		Condition condition = new Condition("ForgReadingBooksDDL.recommed","=",1);
 		Sort sort = new Sort("ForgReadingBooksDDL.id",true);
 		return Dal.select("ForgReadingBooksDDL.*", condition, sort, 0, top);
@@ -69,18 +71,32 @@ public class ForgBookService {
 	public static List<ForgReadingBooksDDL> listHotBooks(int page,int pageSize){		 
 		Sort sort = new Sort("ForgReadingBooksDDL.flows",false);
 		return Dal.select("ForgReadingBooksDDL.*", null, sort, (page-1)*pageSize, pageSize);
-	}
+	}*/
 	
-	public static List<ForgReadingBooksDDL> listBooks(int hotOrLast,int jx,int page,int pageSize){	
+	public static List<ForgReadingBooksDDL> listBooks(int hotOrLast,int recommend,int type,int page,int pageSize){	
 		Condition condition = new Condition("ForgReadingBooksDDL.id",">",0);
 		Sort sort = new Sort("ForgReadingBooksDDL.id",false);
 		if(hotOrLast == 1){
 			sort = new Sort("ForgReadingBooksDDL.flows",false);
 		}
-		if(jx == 1){ 
+		if(recommend==1){
 			condition.add(new Condition("ForgReadingBooksDDL.recommed","=",1),"and");
 		}
+		if(type>0){
+			condition.add(new Condition("ForgReadingBooksDDL.type","=",type),"and");
+		}
 		return Dal.select("ForgReadingBooksDDL.*", condition, sort, (page-1)*pageSize, pageSize);
+	}
+	
+	public static int countBooks(int hotOrLast,int recommend,int type){	
+		Condition condition = new Condition("ForgReadingBooksDDL.id",">",0);
+		if(recommend==1){
+			condition.add(new Condition("ForgReadingBooksDDL.recommed","=",1),"and");
+		}
+		if(type>0){
+			condition.add(new Condition("ForgReadingBooksDDL.type","=",type),"and");
+		}		
+		return Dal.count(condition);
 	}
 	
 	public static List<ForgReadingBooksDDL> listRandomBooks(){		 

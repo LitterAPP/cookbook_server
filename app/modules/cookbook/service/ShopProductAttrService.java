@@ -16,15 +16,19 @@ public class ShopProductAttrService {
 
 	public static List<ShopProductAttrRelDDL> listByProduct(String productId){
 		Condition cond = new Condition("ShopProductAttrRelDDL.productId","=",productId);
-		return Dal.select("ShopProductAttrRelDDL.*", cond, new Sort("ShopProductAttrRelDDL.orderBy",true), 0, 10);
+		return Dal.select("ShopProductAttrRelDDL.*", cond, new Sort("ShopProductAttrRelDDL.orderBy",true), 0, -1);
 	}
 	
 	public static ShopProductAttrRelDDL get(int id){
 		return Dal.select("ShopProductAttrRelDDL.*", id);
 	}
 	 
-	
+	 
 	public static ShopProductAttrDDL createAttr(String name){
+		ShopProductAttrDDL old = getByName(name);
+		if(old!=null){
+			return old;
+		}
 		ShopProductAttrDDL attr = new ShopProductAttrDDL();
 		attr.setAttrId(IDUtil.gen("ATTR"));
 		attr.setAttrName(name);

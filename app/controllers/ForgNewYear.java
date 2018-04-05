@@ -63,7 +63,7 @@ public class ForgNewYear extends Controller{
 			if(StringUtils.isEmpty(ossKey) || ossKey.equals("null") || ossKey.equals("undefined")){
 				throw new Exception("上传失败");
 			}
-			BainianService.addReplay(recordId, ossKey, user==null?API.getAliOssAccessUrl("tasty", "eefafe56d06240f4a33d1ae3269886bf", 0):user.getAvatarUrl(), user==null?"匿名用户":user.getNickName());
+			BainianService.addReplay(recordId, ossKey, user==null?API.getObjectAccessUrlSimple( "eefafe56d06240f4a33d1ae3269886bf"):user.getAvatarUrl(), user==null?"匿名用户":user.getNickName());
 			
 			ThreadUtil.sumbit(new Runnable(){ 
 				@Override
@@ -124,7 +124,7 @@ public class ForgNewYear extends Controller{
  			for(ForgBainianCoverDDL templ: templates){
 				Map<String,Object> one = new HashMap<String,Object>();
 				one.put("id", templ.getId());
-				one.put("url", API.getAliOssAccessUrl("tasty", templ.getOssKey(), 0));
+				one.put("url", API.getObjectAccessUrlSimple( templ.getOssKey()));
 				list.add(one);
  			}
 			renderJSON(RtnUtil.returnSuccess("OK",list));		
@@ -154,14 +154,14 @@ public class ForgNewYear extends Controller{
 				one.put("id", my.getId());
 				one.put("nickName", my.getNickName());
 				one.put("avatar", my.getAvatar());
-				one.put("url", API.getAliOssAccessUrl("tasty", my.getCoverOssKey(), 0));
-				one.put("recordUrl", API.getAliOssAccessUrl("tasty", my.getRecordOssKey(), 0));
+				one.put("url", API.getObjectAccessUrlSimple( my.getCoverOssKey()));
+				one.put("recordUrl", API.getObjectAccessUrlSimple( my.getRecordOssKey()));
 				List<Map<String,Object>> replayers = new ArrayList<Map<String,Object>>();
 				List<ForgBainianReplayDDL> replayList = BainianService.listReplays(my.getId().intValue());
 				if(replayList!=null && replayList.size()>0){
 					for(ForgBainianReplayDDL replay : replayList){
 						Map<String,Object> replayer = new HashMap<String,Object>();
-						replayer.put("voice", API.getAliOssAccessUrl("tasty", replay.getReplayVoiceOsskey(), 0));
+						replayer.put("voice", API.getObjectAccessUrlSimple( replay.getReplayVoiceOsskey()));
 						replayer.put("nickName",replay.getReplayerNickName());
 						replayer.put("avatar",replay.getReplayerAvater());
 						replayer.put("time",util.DateUtil.format(replay.getReplayTime(), "yyyy-MM-dd"));
@@ -195,14 +195,14 @@ public class ForgNewYear extends Controller{
 			one.put("userId", my.getUserId());
 			one.put("nickName", my.getNickName());
 			one.put("avatar", my.getAvatar());
-			one.put("url", API.getAliOssAccessUrl("tasty", my.getCoverOssKey(), 0));
-			one.put("recordUrl", API.getAliOssAccessUrl("tasty", my.getRecordOssKey(), 0));
+			one.put("url", API.getObjectAccessUrlSimple( my.getCoverOssKey()));
+			one.put("recordUrl", API.getObjectAccessUrlSimple( my.getRecordOssKey()));
 			List<Map<String,Object>> replays = new ArrayList<Map<String,Object>>();
 			List<ForgBainianReplayDDL> replayList = BainianService.listReplays(my.getId().intValue());
 			if(replayList!=null && replayList.size()>0){
 				for(ForgBainianReplayDDL replay : replayList){
 					Map<String,Object> replayer = new HashMap<String,Object>();
-					replayer.put("voice", API.getAliOssAccessUrl("tasty", replay.getReplayVoiceOsskey(), 0));
+					replayer.put("voice", API.getObjectAccessUrlSimple( replay.getReplayVoiceOsskey()));
 					replayer.put("nickName",replay.getReplayerNickName());
 					replayer.put("avatar",replay.getReplayerAvater());
 					replayer.put("time",util.DateUtil.format(replay.getReplayTime(), "yyyy-MM-dd"));
@@ -219,7 +219,7 @@ public class ForgNewYear extends Controller{
 	
 	public static void getBgMusic(){
 		try {
-			String url  = API.getAliOssAccessUrl("tasty", "ba05405266284f60870aa9710bf1cca1", 0);
+			String url  = API.getObjectAccessUrlSimple( "ba05405266284f60870aa9710bf1cca1");
 			renderJSON(RtnUtil.returnSuccess("OK",url));
 		} catch (Exception e) {
 			Logger.error(e, e.getMessage());

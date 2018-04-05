@@ -40,6 +40,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.qcloud.cos.COSClient;
+import com.qcloud.cos.ClientConfig;
+import com.qcloud.cos.auth.BasicCOSCredentials;
+import com.qcloud.cos.auth.COSCredentials;
+import com.qcloud.cos.region.Region;
 
 import jws.Jws;
 import jws.Logger;
@@ -54,7 +59,11 @@ import util.baidu.BaiduHttpUtil;
 import util.baidu.Base64Util;
 
 public class API {
-	
+	// 1 初始化用户身份信息(secretId, secretKey)
+	private static final COSCredentials cred = new BasicCOSCredentials("AKIDCQmDxrO1cRNB7mfZzNfD76KPLH2NBXKB", "W3nbOHA8CEc6etE8pbIB7uhWQM9lDNEz");
+	// 2 设置bucket的区域, COS地域的简称请参照 https://cloud.tencent.com/document/product/436/6224
+	private static final ClientConfig clientConfig = new ClientConfig(new Region("ap-guangzhou"));
+
 	
 	 
 	public static <T> T aliAPI(String host,String path,String method, Map<String, String> querys,Type type,String appcode){
@@ -215,6 +224,58 @@ public class API {
 	 * @return
 	 * @throws Exception
 	 */
+	public static String uploadImageToTencent(String bucketName,File file,int width,float quality ) throws Exception{
+		
+		width = width==0?320:width;
+		quality = quality==0.0f?0.9f:quality;	
+		 
+		COSClient cosclient = null;
+		InputStream input = new FileInputStream(file);
+		BufferedImage bufImg = ImageIO.read(input);// 把图片读入到内存中
+		try{
+			//压缩图片
+			bufImg = Thumbnails.of(bufImg).width(width).keepAspectRatio(true).outputQuality(quality).asBufferedImage();
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();// 存储图片文件byte数组
+			ImageIO.write(bufImg, "png", bos); // 图片写入到 ImageOutputStream
+			input = new ByteArrayInputStream(bos.toByteArray());
+			
+			cosclient = new COSClient(cred, clientConfig);
+			// bucket的命名规则为{name}-{appid} ，此处填写的存储桶名称必须为此格式
+			bucketName = StringUtils.isEmpty(bucketName)?"hongjiu-1252785849":bucketName;
+			if(!cosclient.doesBucketExist(bucketName)){
+				 com.qcloud.cos.model.CreateBucketRequest createBucketRequest = new com.qcloud.cos.model.CreateBucketRequest(bucketName);
+				 createBucketRequest.setCannedAcl(com.qcloud.cos.model.CannedAccessControlList.PublicRead);
+				 com.qcloud.cos.model.Bucket bucket = cosclient.createBucket(createBucketRequest);
+			}
+			String myObjectKey = "COS_"+UUID.randomUUID().toString().replace("-", "");
+			com.qcloud.cos.model.ObjectMetadata  objectMetadata = new com.qcloud.cos.model.ObjectMetadata ();
+			objectMetadata.setContentLength(input.available());
+			objectMetadata.setContentType("image/png");
+			com.qcloud.cos.model.PutObjectRequest  putObjectRequest =
+	                new com.qcloud.cos.model.PutObjectRequest(bucketName, myObjectKey, input, objectMetadata);
+			
+			com.qcloud.cos.model.PutObjectResult putObjectResult = cosclient.putObject(putObjectRequest);
+			 
+			Logger.info("upload image to tencent,myObjectKey %s",myObjectKey);
+			return myObjectKey;
+		}catch(Exception e){
+			Logger.error(e, e.getMessage());
+			throw new Exception("上传失败");
+		}finally{
+			if(cosclient!=null)cosclient.shutdown();
+			input.close(); 
+		} 
+	}
+	
+	/**
+	 * 
+	 * @param bucketName
+	 * @param file
+	 * @param width 图片压缩宽度 默认320
+	 * @param quality 图片压缩质量 小于1的float类型 默认0.9
+	 * @return
+	 * @throws Exception
+	 */
 	public static String uploadImage(String bucketName,File file,int width,float quality ) throws Exception{
 		
 		width = width==0?320:width;
@@ -262,6 +323,20 @@ public class API {
 		} 
 	}
 	
+	public static String getObjectAccessUrlSimple(String objectKey) throws Exception{
+		if(StringUtils.isEmpty(objectKey)) return null;
+		Object urlFromCache = Cache.get(objectKey);
+		if(urlFromCache!=null){
+			return String.valueOf(urlFromCache);
+		}
+		
+		if(objectKey.startsWith("COS_")){//腾讯云COS新增后，兼容代码
+			return getTencentCosAccessUrl("hongjiu-1252785849",objectKey,0);
+		}else{
+			return getObjectAccessUrl("tasty",objectKey,0);
+		}
+	}
+	
 	/**
 	 * 
 	 * @param bucketName
@@ -270,14 +345,20 @@ public class API {
 	 * @return
 	 * @throws Exception
 	 */
-	public static String getAliOssAccessUrl(String bucketName,String objectKey,int expiresInSecond) throws Exception{
+	private static String getObjectAccessUrl(String bucketName,String objectKey,int expiresInSecond) throws Exception{
 		if(StringUtils.isEmpty(objectKey)) return null;
+		
+		Object urlFromCache = Cache.get(objectKey);
+		if(urlFromCache!=null){
+			return String.valueOf(urlFromCache);
+		}
+		
+		if(objectKey.startsWith("COS_")){//腾讯云COS新增后，兼容代码
+			return getTencentCosAccessUrl(bucketName,objectKey,expiresInSecond);
+		}
 		OSSClient ossClient = null;
 		try{
-			Object urlFromCache = Cache.get(objectKey);
-			if(urlFromCache!=null){
-				return String.valueOf(urlFromCache);
-			}
+			
 			ossClient = new OSSClient("oss-cn-beijing.aliyuncs.com",
 					"HW77gOwWnQiwQIuB", 
 					"0N36kSmuIapg7352cX23fOGxUyXMoq");
@@ -291,9 +372,39 @@ public class API {
 			return urlStr;
 		}catch(Exception e){
 			Logger.error(e, e.getMessage());
-			throw new Exception("获取OSS Key失败");
+			throw new Exception("获取OSS URL失败");
 		}finally{
 			  if(ossClient!=null)ossClient.shutdown();
+		} 
+	}
+	
+	private static String getTencentCosAccessUrl(String bucketName,String objectKey,int expiresInSecond) throws Exception{
+		COSClient cosclient = null;
+		try{
+			cosclient = new COSClient(cred, clientConfig);
+			com.qcloud.cos.model.GeneratePresignedUrlRequest  req =
+	                new com.qcloud.cos.model.GeneratePresignedUrlRequest(bucketName, objectKey, com.qcloud.cos.http.HttpMethodName.GET);
+			com.qcloud.cos.model.ResponseHeaderOverrides responseHeaders = new com.qcloud.cos.model.ResponseHeaderOverrides();
+			String cacheExpireStr =com.qcloud.cos.utils.DateUtils.formatRFC822Date(new Date(System.currentTimeMillis() + 24 * 3600 * 1000));
+			responseHeaders.setContentType("image/png");
+		    responseHeaders.setContentLanguage("zh-CN");
+		    responseHeaders.setContentDisposition(null);
+		    responseHeaders.setCacheControl("no-cache");
+		    responseHeaders.setExpires(cacheExpireStr);
+		    req.setResponseHeaders(responseHeaders);
+		    
+		    expiresInSecond = expiresInSecond==0?1*60*60:expiresInSecond;
+		    
+		    Date expirationDate = new Date(System.currentTimeMillis() + expiresInSecond * 1000);
+	        req.setExpiration(expirationDate);
+	        String url = cosclient.generatePresignedUrl(req).toString();
+	        Cache.set(objectKey, url, "1h");
+	        return url;
+		}catch(Exception e){
+			Logger.error(e, e.getMessage());
+			throw new Exception("获取COS URL失败");
+		}finally{
+			if(cosclient!=null)cosclient.shutdown(); 
 		} 
 	}
 	
@@ -519,6 +630,10 @@ public class API {
 	}
 	public static void sendWxMessage(String appId,String touserOpenid,String template_id,String page,String form_id,Map<String,Map> dataMap){
 		try{
+			if(Jws.configuration.getProperty("application.mode").equals("dev")){
+				Logger.info("dev mode , do not send wx message.");
+				return ;
+			}
 			String token = WXAccessTokenService.fromCache(appId);
 			if(token==null)return ;
 			
@@ -566,11 +681,15 @@ public class API {
 		}*/
 		
 		String path = "C:\\Users\\fish\\Desktop\\青蛙读本\\logo.png";
-		String key = uploadToAliOss("tasty",new File(path));
-		System.out.println(key);
+		//uploadImage("tasty",new File(path),0,0);
+		//uploadImageToTencent(null,new File(path),0,0);
+		System.out.println(getObjectAccessUrl("tasty","0290abbbbcb94b048d8fa06360cbb453",60*10));
+	//	System.out.println(getObjectAccessUrl("hongjiu-1252785849","COS_be7e706ddd024451944617610181e437",60*10));
+		//String key = uploadToAliOss("tasty",new File(path));
+		//System.out.println(key);
 		
 		
-		//System.out.print(getAliOssAccessUrl("tasty",key,3600));
+		//System.out.print(getObjectAccessUrl("tasty",key,3600));
 		
 		/*StringBuffer noceStr = new StringBuffer();
 		for(int i=0;i<32;i++){

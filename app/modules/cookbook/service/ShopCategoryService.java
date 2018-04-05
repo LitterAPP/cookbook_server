@@ -22,6 +22,24 @@ public class ShopCategoryService {
 		return Dal.select("ShopProductCategoryRelDDL.*", condition, null, 0, -1);
 	}
 	
+	public static void deleteCategoryRel(String productId){
+		Condition condition = new Condition("ShopProductCategoryRelDDL.productId","=",productId);
+		Dal.delete(condition);
+	}
+	
+	public static List<ShopProductCategoryRelDDL> listByCategory(String pCategoryId,String subCategoryId){
+		if(StringUtils.isEmpty(pCategoryId) && StringUtils.isEmpty(subCategoryId)){
+			return null;
+		}
+		if(StringUtils.isEmpty(subCategoryId)){
+			Condition condition = new Condition("ShopProductCategoryRelDDL.pCategoryId","=",pCategoryId);
+			return Dal.select("ShopProductCategoryRelDDL.*", condition, null, 0, -1);
+		}else {
+			Condition condition = new Condition("ShopProductCategoryRelDDL.subCategoryId","=",subCategoryId);
+			return Dal.select("ShopProductCategoryRelDDL.*", condition, null, 0, -1);
+		}
+	}
+	
 	public static ShopProductCategoryDDL createPCategory(String pCategoryName){
 		ShopProductCategoryDDL p = new ShopProductCategoryDDL();
 		p.setCategoryId(IDUtil.gen("CAT"));
@@ -42,6 +60,9 @@ public class ShopCategoryService {
 	}
 	
 	public static ShopProductCategoryDDL getByPCategoryId(String categoryId){
+		if(StringUtils.isEmpty(categoryId)){
+			return null;
+		}
 		Condition condition = new Condition("ShopProductCategoryDDL.categoryId","=",categoryId);
 		List<ShopProductCategoryDDL> list = Dal.select("ShopProductCategoryDDL.*", condition, null, 0, 1);
 		if(list==null || list.size()==0){
@@ -81,6 +102,9 @@ public class ShopCategoryService {
 	}
 	
 	public static ShopProductCategoryChildDDL getBySubCategoryId(String categoryId){
+		if(StringUtils.isEmpty(categoryId)){
+			return null;
+		}
 		Condition condition = new Condition("ShopProductCategoryChildDDL.categoryId","=",categoryId);
 		List<ShopProductCategoryChildDDL> list = Dal.select("ShopProductCategoryChildDDL.*", condition, null, 0, 1);
 		if(list==null || list.size()==0){
@@ -98,5 +122,18 @@ public class ShopCategoryService {
 		}
 		return Dal.select("ShopProductCategoryChildDDL.*", null, null, 0, -1);
 	}
+	
+	
+	public static List<ShopProductCategoryChildDDL> listByParentId(String pCagegoryId){
+		if(!StringUtils.isEmpty(pCagegoryId)){
+			Condition condition = new Condition("ShopProductCategoryChildDDL.pCagegoryId","=",pCagegoryId);
+			List<ShopProductCategoryChildDDL> list = Dal.select("ShopProductCategoryChildDDL.*", condition, null, 0, -1);
+			return list;
+		}
+		return null;
+	}
+	
+	
+	 
 	
 }

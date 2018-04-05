@@ -14,7 +14,7 @@ public class ForgBookShotService {
 
 	public static int speakSpeed = Integer.parseInt(Jws.configuration.getProperty("speak.speed","100"));
 	
-	public static void multiInsert(int bookId,String[] shots,String[] wordCounts){
+	public static void multiInsert(int bookId,String[] shots,String[] wordCounts,String[] memos){
 		List<ForgReadingContentShotDDL> list = new ArrayList<ForgReadingContentShotDDL>();		 
 		double perSec = new BigDecimal(new Double(speakSpeed/60d).toString())
 				.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
@@ -24,13 +24,25 @@ public class ForgBookShotService {
 			forgShot.setBookId(bookId);
 			forgShot.setPageNum(page);
 			forgShot.setPageShot(shots[i]);
-			forgShot.setPageText("");
-			int wordCount = Integer.parseInt(wordCounts[i]);
+			
+			int wordCount = 0;
+			if(wordCounts!=null && wordCounts.length == shots.length){
+				wordCount = Integer.parseInt(wordCounts[i]);
+			}
+			
+			if(memos!=null && memos.length == shots.length){
+				forgShot.setPageText(memos[i]);
+				wordCount =memos[i].length();
+			}else{
+				forgShot.setPageText("");
+			}		
+			
 			forgShot.setWordCount(wordCount);
 			int readTime =  new BigDecimal(new Double(wordCount/perSec).toString())
 					.setScale(0, BigDecimal.ROUND_HALF_UP).intValue();
 			forgShot.setReadTime(readTime);
 			page++;
+			
 			list.add(forgShot);
 		}
 		multiDelete(bookId);

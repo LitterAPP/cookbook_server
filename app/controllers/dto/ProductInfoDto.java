@@ -1,5 +1,6 @@
 package controllers.dto;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ProductInfoDto {
@@ -23,6 +24,13 @@ public class ProductInfoDto {
 	public String contact_wx;
 	public List<TextDetail> text_details;
 	public List<Image> pic_details;
+	//商品关联多个分类分组
+	public List<Category> selectedCategoryParams ;
+	public List<String> selectedAttrs;
+	public boolean isHot;
+	public boolean isSale;
+
+	
 	
 	public class TogetherInfo{
 		public String price;
@@ -47,5 +55,10 @@ public class ProductInfoDto {
 		public String localUrl;
 		public String remoteUrl;
 		public String osskey;
+	}
+	
+	public class Category{
+		public String pCategoryId;
+		public String subCategoryId;
 	}
 }

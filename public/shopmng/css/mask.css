@@ -1,0 +1,23 @@
+.mask{
+    height: 100%;
+    width: 100%;
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    background: rgba(0,0,0,0.8);
+}
+
+.mask div{
+    height: 40px;
+    width: 200px;
+    background: #fff;
+    color: #000;
+    position: absolute;
+    top:50%;
+    left: 50%;
+    margin-left: -100px;
+    margin-top: -20px;
+    line-height: 40px;
+    font-size: 12px;
+    text-align: center;
+}

@@ -344,7 +344,7 @@ public class CookBook extends Controller{
 					int count = MenuService.countCookBookInMenu(cbm.getId());
 					dto.put("count", count);
 					dto.put("menuName", cbm.getMenuName()); 
-					dto.put("banner",API.getAliOssAccessUrl("tasty", cbm.getKey(), 60)); 
+					dto.put("banner",API.getObjectAccessUrlSimple(cbm.getKey())); 
 					dto.put("id", cbm.getId()); 
 					result.add(dto);
 				}
@@ -392,7 +392,7 @@ public class CookBook extends Controller{
 			
 			CookBookUsersDDL master = UserService.findBySession(session);
 			
-			menu.setKey(API.getAliOssAccessUrl("tasty", menu.getKey(), 60));
+			menu.setKey(API.getObjectAccessUrlSimple(menu.getKey()));
 			result.put("menu", menu);
 			result.put("user", user);
 			
@@ -556,7 +556,7 @@ public class CookBook extends Controller{
 					toDto.put("id", subject.getId());
 					toDto.put("title", subject.getTitle());
 					toDto.put("subTitle", subject.getSubTitle());
- 					String ossUrl = API.getAliOssAccessUrl("tasty", subject.getBannerKey(), 60);
+ 					String ossUrl = API.getObjectAccessUrlSimple(subject.getBannerKey());
 					toDto.put("bgPicUrl",ossUrl);
 					toDto.put("type", subject.getType());
 					toDto.put("createTime",DateUtil.formatDate(new Date(subject.getCreateTime()), "yyyy-MM-dd") );
@@ -587,9 +587,9 @@ public class CookBook extends Controller{
 				String title = subject.getTitle();
 				String keywords = subject.getKeywords();
 				String description = subject.getDescription();
-				String bannerUrl = API.getAliOssAccessUrl("tasty", subject.getBannerKey(), 60).toString();
+				String bannerUrl = API.getObjectAccessUrlSimple(subject.getBannerKey()).toString();
 				String subTitle = subject.getSubTitle();
-				String qrcode = API.getAliOssAccessUrl("tasty", content.getQrcode(), 60);
+				String qrcode = API.getObjectAccessUrlSimple(content.getQrcode());
 				content.setQrcode(qrcode);
 				
 				List<Content> contents = content.getContents();
@@ -602,7 +602,7 @@ public class CookBook extends Controller{
 							if(pickey.startsWith("http")){
 								continue;
 							}
-							pics.set(i, API.getAliOssAccessUrl("tasty", pickey, 60).toString());
+							pics.set(i, API.getObjectAccessUrlSimple(pickey).toString());
 						}
 					}
 				}
@@ -797,13 +797,13 @@ public class CookBook extends Controller{
 					Map<String,Object> dto = new HashMap<String,Object>();					
 					if(cbm.getType() == 0){
 						dto.put("menuName", cbm.getMenuName()); 
-						dto.put("banner",API.getAliOssAccessUrl("tasty", cbm.getKey(), 60)); 
+						dto.put("banner",API.getObjectAccessUrlSimple(cbm.getKey())); 
 					}
 					if(cbm.getType() == 1 ){						
 						if(!StringUtils.isEmpty(cbm.getKey())){
 							String[] pics = cbm.getKey().split(",");
 							for(int i=0;i<pics.length;i++){
-								pics[i] = API.getAliOssAccessUrl("tasty", pics[i], 120);
+								pics[i] = API.getObjectAccessUrlSimple(pics[i]);
 							}
 							dto.put("pics",pics); 
 						}

@@ -25,6 +25,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import dto.shop.ShopIndexDto;
+import dto.shop.ShopNavDto;
 import jws.Jws;
 import jws.Logger;
 import jws.cache.Cache;
@@ -32,6 +34,7 @@ import jws.mvc.Controller;
 import modules.cookbook.ddl.CookBookUsersDDL;
 import modules.cookbook.ddl.ShopCouponMngDDL;
 import modules.cookbook.ddl.ShopExpressDDL;
+import modules.cookbook.ddl.ShopIndexDDL;
 import modules.cookbook.ddl.ShopOrderDDL;
 import modules.cookbook.ddl.ShopProductAttrRelDDL;
 import modules.cookbook.ddl.ShopProductCommunityRelDDL;
@@ -44,6 +47,7 @@ import modules.cookbook.ddl.UserAccountDDL;
 import modules.cookbook.service.ShopCommunityService;
 import modules.cookbook.service.ShopCouponMngService;
 import modules.cookbook.service.ShopExpressService;
+import modules.cookbook.service.ShopIndexService;
 import modules.cookbook.service.ShopOrderService;
 import modules.cookbook.service.ShopProductAttrService;
 import modules.cookbook.service.ShopProductGroupService;
@@ -343,7 +347,7 @@ public class Shop extends Controller{
 				Map<String,Object> result = new HashMap<String,Object>();
 				result.put("productId", p.getProductId());
 				result.put("productName", p.getProductName());
-				result.put("productBanner", API.getAliOssAccessUrl("tasty", p.getProductBanner(), 0));
+				result.put("productBanner", API.getObjectAccessUrlSimple( p.getProductBanner()));
 				result.put("productOriginPrice",AmountUtil.f2y(p.getProductOriginAmount()));
 				result.put("productNowPrice",AmountUtil.f2y(p.getProductNowAmount()));
 				result.put("productTogetherPrice",AmountUtil.f2y(p.getProductTogetherAmount()));
@@ -379,7 +383,83 @@ public class Shop extends Controller{
 			renderJSON(RtnUtil.returnFail(e.getMessage()));
 		}
 	}
-	
+	/**
+	 * 
+	 * @param pcategoryId
+	 * @param subCategoryId
+	 * @param sale
+	 * @param hot
+	 * @param orderBy 1=时间降序 2=销量降序 3=价格降序 4=价格升序 5=综合排序
+	 */
+	public static void listProduct(String productId,String keyword,String pCategoryId,String subCategoryId,boolean isSale,boolean isHot,int status,int orderBy,int page,int pageSize){
+		try{
+			List<Map<String,Object>> mapList = new ArrayList<Map<String,Object>>();
+			Map<String,Object> response = new HashMap<String,Object>();
+			
+			int total = ShopProductService.countProduct(productId,keyword, pCategoryId, subCategoryId, isSale?1:0, isHot?1:0, status);
+			response.put("total", total);
+			response.put("pageTotal", Math.ceil(total/(double)pageSize));
+			 
+			if(total == 0){
+				response.put("list", mapList);
+				renderJSON(RtnUtil.returnSuccess("OK",response));
+			}			
+			List<ShopProductDDL> list = ShopProductService.listProduct(productId,keyword, pCategoryId, subCategoryId, isSale?1:0, isHot?1:0, status,orderBy, page<=0?1:page, pageSize<=0?10:pageSize);
+			
+			for(ShopProductDDL p : list){
+				Map<String,Object> result = new HashMap<String,Object>();
+				result.put("productId", p.getProductId());
+				result.put("productName", p.getProductName());
+				result.put("productBanner", API.getObjectAccessUrlSimple( p.getProductBanner()));
+				result.put("productOriginPrice",AmountUtil.f2y(p.getProductOriginAmount()));
+				result.put("productNowPrice",AmountUtil.f2y(p.getProductNowAmount()));
+				if(p.getJoinTogether()==1){
+					result.put("productTogetherPrice",AmountUtil.f2y(p.getProductTogetherAmount()));
+					result.put("togetherSales",String.format("%.1f", p.getTogetherSales()/10000f));
+				}else{
+					result.put("productTogetherPrice","0.0");
+					result.put("togetherSales","0");
+				}
+				result.put("joinTogether", p.getJoinTogether());
+				result.put("platformChecked", p.getPlatformChecked());
+				
+				result.put("sotre", p.getStore());
+				result.put("status", p.getStatus());
+				result.put("createTime", DateUtil.format(p.getCreateTime()));
+				result.put("pv", p.getPv());
+				result.put("deal", p.getDeal());
+				result.put("isHot", p.getIsHot()==1);
+				result.put("isSale", p.getIsSale()==1);
+
+				
+				List<ShopTogetherDDL> togethers = ShopTogetherService.listByProductId(p.getProductId(), 1, 2);
+				if( togethers != null && togethers.size() == 2){
+					String[] together = new String[]{togethers.get(0).getMasterAvatar(),togethers.get(1).getMasterAvatar()};
+					result.put("togethers", together);
+				}
+				
+				//小区合作
+				/*List<ShopProductCommunityRelDDL>  communityList = ShopCommunityService.listByProductId(p.getProductId());
+				if(communityList!=null && communityList.size()>0){
+					List<Map<String,Object>> communities = new ArrayList<Map<String,Object>>(); 
+					for( ShopProductCommunityRelDDL c : communityList ){
+						Map<String,Object> map = new HashMap<String,Object>();
+						map.put("communityId",c.getCommunityId());
+						map.put("communityName",c.getCommunityName()); 
+						communities.add(map); 
+					}
+					result.put("communities", communities);
+				}	*/		
+				mapList.add(result);				
+			}
+			
+			response.put("list", mapList);
+			renderJSON(RtnUtil.returnSuccess("OK", response));
+		}catch(Exception e){
+			Logger.error(e, e.getMessage());
+			renderJSON(RtnUtil.returnFail(e.getMessage()));
+		}
+	}
 	public static void productDetail(String productId){
 		try{
 			Map<String,Object> result = new HashMap<String,Object>();
@@ -407,7 +487,7 @@ public class Shop extends Controller{
 			if(ssimages!=null && ssimages.size()>0){
 				List<String> screenshots = new ArrayList<String>();
 				for( ShopProductImagesDDL img : ssimages ){
-					screenshots.add( API.getAliOssAccessUrl("tasty", img.getImageKey(), 0));
+					screenshots.add( API.getObjectAccessUrlSimple( img.getImageKey()));
 				}
 				result.put("screenshots", screenshots);
 			}
@@ -416,7 +496,7 @@ public class Shop extends Controller{
 			if(detailimages!=null && detailimages.size()>0){
 				List<String> detailImages = new ArrayList<String>();
 				for( ShopProductImagesDDL img : detailimages ){
-					detailImages.add( API.getAliOssAccessUrl("tasty", img.getImageKey(), 0));
+					detailImages.add( API.getObjectAccessUrlSimple( img.getImageKey()));
 				}
 				result.put("detailImages", detailImages);
 			}
@@ -426,7 +506,7 @@ public class Shop extends Controller{
 			if(showimages!=null && showimages.size()>0){
 				List<String> showImages = new ArrayList<String>();
 				for( ShopProductImagesDDL img : showimages ){
-					showImages.add( API.getAliOssAccessUrl("tasty", img.getImageKey(), 0));
+					showImages.add( API.getObjectAccessUrlSimple( img.getImageKey()));
 				}
 				result.put("showImages", showImages);
 			}
@@ -469,7 +549,7 @@ public class Shop extends Controller{
 					map.put("groupId",group.getGroupId());
 					map.put("groupIndex",index);
 					map.put("groupName", group.getGroupName());
-					map.put("groupImage",API.getAliOssAccessUrl("tasty", group.getGroupImage(), 0));
+					map.put("groupImage",API.getObjectAccessUrlSimple( group.getGroupImage()));
 					map.put("groupPrice",AmountUtil.f2y(group.getGroupPrice()));
 					map.put("groupTogetherPrice",AmountUtil.f2y(group.getGroupTogetherPrice()));
 					groups.add(map);
@@ -604,7 +684,7 @@ public class Shop extends Controller{
 			} 		
 			result.put("order",order); 
 			result.put("originPrice",AmountUtil.f2y(product.getProductOriginAmount())); 
-			result.put("shareImage",API.getAliOssAccessUrl("tasty", "4d638917b143496a95bb83d3d935c7c1", 0));
+			result.put("shareImage",API.getObjectAccessUrlSimple( "4d638917b143496a95bb83d3d935c7c1"));
 			renderJSON(RtnUtil.returnSuccess("OK",result));
 		}catch(Exception e){
 			Logger.error(e, e.getMessage());
@@ -631,7 +711,7 @@ public class Shop extends Controller{
 			for(ShopOrderDDL order : list){
 				Map<String,Object> map = new HashMap<String,Object>();
 				map.put("orderId",order.getOrderId());
-				map.put("groupImg", API.getAliOssAccessUrl("tasty", order.getGroupImg(), 0));
+				map.put("groupImg", API.getObjectAccessUrlSimple( order.getGroupImg()));
 				map.put("groupName", order.getGroupName());
 				map.put("productName", order.getProductName());
 				map.put("groupId", order.getGroupId());
@@ -676,7 +756,7 @@ public class Shop extends Controller{
 			Map<String,Object> map = new HashMap<String,Object>();
 			map.put("isSeller", user.getId().intValue() == order.getSellerUserId());
 			map.put("orderId",order.getOrderId());
-			map.put("groupImg", API.getAliOssAccessUrl("tasty", order.getGroupImg(), 0));
+			map.put("groupImg", API.getObjectAccessUrlSimple( order.getGroupImg()));
 			map.put("groupName", order.getGroupName());
 			map.put("productName", order.getProductName());
 			map.put("groupId", order.getGroupId());
@@ -689,7 +769,7 @@ public class Shop extends Controller{
 			map.put("sellerTelNumber", order.getSellerTelNumber());
 			map.put("sellerWxNumber", order.getSellerWxNumber());
 			
-			map.put("shareImage",API.getAliOssAccessUrl("tasty", "4d638917b143496a95bb83d3d935c7c1", 0));
+			map.put("shareImage",API.getObjectAccessUrlSimple( "4d638917b143496a95bb83d3d935c7c1"));
 			
 			if(order.getGroupTogetherPrice() != null){
 				map.put("groupTogetherPrice", AmountUtil.f2y(order.getGroupTogetherPrice()));
@@ -868,6 +948,69 @@ public class Shop extends Controller{
 				}
 				result.put("coupons", coupons);
 			}
+			renderJSON(RtnUtil.returnSuccess("OK",result));
+		}catch(Exception e){
+			Logger.error(e, e.getMessage());
+			renderJSON(RtnUtil.returnFail(e.getMessage()));
+		}
+	} 
+	
+	/**
+	 * 查询店铺首页配置
+	 * @param shopId
+	 */
+	public static void getShopIndexConfig(int shopId){
+		try{
+			ShopIndexDDL shopIndex = ShopIndexService.get(shopId);
+			if(shopIndex==null){
+				renderJSON(RtnUtil.returnFail("店铺不存在"));
+			}
+			if(StringUtils.isEmpty(shopIndex.getConfig())){
+				renderJSON(RtnUtil.returnSuccess());
+			}
+			ShopIndexDto shopIndexConfig = gson.fromJson(shopIndex.getConfig(), ShopIndexDto.class);
+			//处理图片URL
+			shopIndexConfig.shopAvatar = API.getObjectAccessUrlSimple(shopIndexConfig.shopAvatarKey);
+			shopIndexConfig.shopBanner = API.getObjectAccessUrlSimple(shopIndexConfig.shopBannerKey);
+			 
+			for(ShopNavDto dto : shopIndexConfig.firstNavList){
+				if(dto.linkType == 2){
+					dto.img = API.getObjectAccessUrlSimple(dto.imgkey);
+				}
+			}
+			for(ShopNavDto dto : shopIndexConfig.secondNavList){
+				if(dto.linkType == 2){
+					dto.img = API.getObjectAccessUrlSimple(dto.imgkey);
+				}
+			}
+			for(ShopNavDto dto : shopIndexConfig.swiperList){
+				if(dto.linkType == 2){
+					dto.img = API.getObjectAccessUrlSimple(dto.imgkey);
+				}
+			}
+			for(ShopNavDto dto : shopIndexConfig.thirdNavList){
+				if(dto.linkType == 2){
+					dto.img = API.getObjectAccessUrlSimple(dto.imgkey);
+				}
+			}
+			for(ShopNavDto dto : shopIndexConfig.fourthNavList){
+				if(dto.linkType == 2){
+					dto.img = API.getObjectAccessUrlSimple(dto.imgkey);
+				}
+			}
+			for(ShopNavDto dto : shopIndexConfig.fiveNavList){
+				if(dto.linkType == 2){
+					dto.img = API.getObjectAccessUrlSimple(dto.imgkey);
+				}
+			}
+			
+			Map<String,Object> result = new HashMap<String,Object>();
+			result.put("config", shopIndexConfig);
+			
+			//兼容小程序吧
+			result.put("shopName", shopIndex.getName());
+			result.put("shopAvatar",API.getObjectAccessUrlSimple(shopIndex.getAvatar()));
+			result.put("follow", shopIndex.getFollow());
 			renderJSON(RtnUtil.returnSuccess("OK",result));
 		}catch(Exception e){
 			Logger.error(e, e.getMessage());

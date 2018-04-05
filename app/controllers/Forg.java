@@ -3,8 +3,6 @@ package controllers;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,24 +61,44 @@ public class Forg extends Controller{
 	 * @param bookName
 	 * @param bookCover
 	 * @param bookDesc
-	 * @param shots  ,号分隔数组
+	 * @param shots
+	 * @param wordCounts
+	 * @param bookId
+	 * @param musicId
+	 * @param memos
+	 * @param type 1=朗读 2=看图讲故事 3=问题解答   4=用户心情moment 5=辩论
 	 */
 	public static void createBooks(String session,String bookName,String bookCover,
-			String bookDesc,String shots,String wordCounts,int bookId,int musicId){
+			String bookDesc,String shots,String wordCounts,int bookId,int musicId,String memos,final int type){
 		try{ 
-			CookBookUsersDDL user = UserService.findBySession(session);
+			final CookBookUsersDDL user = UserService.findBySession(session);
 			if(user==null){
 				renderJSON(RtnUtil.returnLoginFail());
 			}
+			String[] shotArry  =  shots.split(",");
+			if(StringUtils.isEmpty(bookCover)){
+				bookCover = shotArry[0];
+			}
+			
+			String[] wordCountArry = null;
+			if(!StringUtils.isEmpty(wordCounts)){
+				wordCountArry = wordCounts.split(",");
+			}
+			
+			String[] memoArry = null;
+			if(!StringUtils.isEmpty(memos)){
+				memoArry = memos.split(",");
+			}
+			
 			ForgReadingBooksDDL book = ForgBookService.get(bookId);
 			if(book != null){ 
-				ForgBookService.updateBook(bookId, bookName, bookCover, bookDesc,musicId);
-				ForgBookShotService.multiInsert((int)bookId, shots.split(","),wordCounts.split(",")); 
+				ForgBookService.updateBook(bookId, bookName, bookCover, bookDesc,musicId,type);
+				ForgBookShotService.multiInsert((int)bookId, shotArry,wordCountArry,memoArry); 
 				renderJSON(RtnUtil.returnSuccess("OK",bookId));
 			}
-			bookId = (int)ForgBookService.createBook(bookName, bookCover, bookDesc, user.getNickName(), user.getAvatarUrl(), user.getId().intValue(),musicId);
+			bookId = (int)ForgBookService.createBook(bookName, bookCover, bookDesc, user.getNickName(), user.getAvatarUrl(), user.getId().intValue(),musicId,type);
 			if(bookId>0){
-				ForgBookShotService.multiInsert((int)bookId, shots.split(","),wordCounts.split(","));
+				ForgBookShotService.multiInsert((int)bookId, shotArry,wordCountArry,memoArry);
 				//后台任务发送推送消息
 				final int book_id = bookId;
 				final String book_name = bookName;
@@ -94,7 +112,7 @@ public class Forg extends Controller{
 						k1.put("color", "#121212"); 
 					
 						Map<String,String> k2 = new HashMap<String,String>();
-						k2.put("value", "小青蛙运营专员");
+						k2.put("value", type==0?"小青蛙运营专员":user.getNickName());
 						k2.put("color", "#838B8B");
 						
 						Map<String,String> k3 = new HashMap<String,String>();
@@ -102,14 +120,22 @@ public class Forg extends Controller{
 						k3.put("color", "#838B8B");
 						
 						Map<String,String> k4 = new HashMap<String,String>();
-						k4.put("value", "赶紧去朗读吧，再晚沙发就被别人抢走了哦~");
+						String text = "赶紧去朗读吧，再晚沙发就被别人抢走了哦~";
+						switch (type) {
+							case 1:text = "新动态：有新读本了，赶紧去朗读吧，再晚沙发就被别人抢走了哦~";break;
+							case 2:text = "新动态：看图讲故事，看看谁的故事讲的更精彩呢~";break;
+							case 3:text = "新动态：问题解答，看看你的智商是不是超过我了~";break;
+							case 5:text = "新动态：有种来辩，敢来挑战我的辩论水平吗~";break;
+							case 4:text = "新动态：学会聆听，关心他人也是一种美~";break;
+						}
+						k4.put("value", text);
 						k4.put("color", "#0000EE");
 						
 						dataMap.put("keyword1", k1);
 						dataMap.put("keyword2", k2);
 						dataMap.put("keyword3", k3); 
 						dataMap.put("keyword4", k4);
-						String page = "pages/index/index?bookId="+book_id;
+						String page = "pages/read/read?bookId="+book_id;
 						
 						String appId = Jws.configuration.getProperty("forg.appid");
 						List<FormIdsDDL> list = FormIdService.listDistinct(appId);
@@ -160,6 +186,7 @@ public class Forg extends Controller{
 			result.put("readId", record.getId());
 			result.put("bookId", record.getBookId());
 			result.put("bookName", book.getBookName());
+			result.put("bookType",book.getType());
 			
 			result.put("readUserId", record.getUserId());
 			result.put("readerName", record.getNickName());
@@ -183,13 +210,13 @@ public class Forg extends Controller{
 					shotMap.put("readTime", readTime);
 				}
 				
-				shotMap.put("pageShot", API.getAliOssAccessUrl("tasty", shot.getPageShot(), 0));
+				shotMap.put("pageShot", API.getObjectAccessUrlSimple(shot.getPageShot()));
 				ForgReadingRecordsDDL voice = ForgBookRecordService.getByReadIdAndPageId(readId, shot.getId());
 				if(voice == null || voice.getVoiceOss() == null){
 					//throw new Exception("朗读音频不存在,readId="+readId+",pageId="+shot.getId());
 					shotMap.put("voiceUrl", null);
 				}else{
-					shotMap.put("voiceUrl", API.getAliOssAccessUrl("tasty", voice.getVoiceOss(), 0));
+					shotMap.put("voiceUrl", API.getObjectAccessUrlSimple(voice.getVoiceOss()));
 					comp++;
 				}	 
 				shotList.add(shotMap);
@@ -272,7 +299,7 @@ public class Forg extends Controller{
 			Map<String,Object> bookMap = new HashMap<String,Object>();
 			bookMap.put("id", book.getId());
 			bookMap.put("bookName", book.getBookName());
-			bookMap.put("bookCover", API.getAliOssAccessUrl("tasty", book.getBookCover(), 0));
+			bookMap.put("bookCover", API.getObjectAccessUrlSimple(book.getBookCover()));
 			bookMap.put("bookDesc", book.getBookDesc());
 			bookMap.put("recommed", book.getRecommed());
 			bookMap.put("musicId", book.getMusicId()==null?-1:book.getMusicId()); 
@@ -282,6 +309,7 @@ public class Forg extends Controller{
 			bookMap.put("flows", book.getFlows());
 			bookMap.put("createDate", DateUtil.format(book.getCreateTime(), "yyyy-MM-dd")); 
 			bookMap.put("readTimes", ForgBookRecordService.coutReaded(bookId));
+			bookMap.put("type", book.getType()); 
 			
 			ForgReadSpeedConfigDDL speedConfig = ForgReadSpeedService.getByUserId(user.getId().intValue());
  			int speakSpeed = speedConfig==null?Integer.parseInt(Jws.configuration.getProperty("speak.speed","100")):speedConfig.getSpeed();
@@ -289,7 +317,7 @@ public class Forg extends Controller{
 					.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue(); 
 			
 			for(ForgReadingContentShotDDL shot : shotList){
-				shot.setPageShot(API.getAliOssAccessUrl("tasty", shot.getPageShot(), 0));
+				shot.setPageShot(API.getObjectAccessUrlSimple(shot.getPageShot()));
 				 
 				if(shot.getWordCount()!=null && shot.getWordCount()>0){
 					int readTime =  new BigDecimal(new Double(shot.getWordCount()/perSec).toString())
@@ -309,7 +337,7 @@ public class Forg extends Controller{
 					selfRecordMap.put("id", selfRecord.getId());
 					selfRecordMap.put("bookId", selfRecord.getBookId());
 					selfRecordMap.put("userId", selfRecord.getUserId());
-					selfRecordMap.put("recordUrl", API.getAliOssAccessUrl("tasty", selfRecord.getRecordUrl(), 0));
+					selfRecordMap.put("recordUrl", API.getObjectAccessUrlSimple(selfRecord.getRecordUrl()));
 					selfRecordMap.put("nickName", selfRecord.getNickName());
 					selfRecordMap.put("avatar", selfRecord.getAvatar());
 					
@@ -335,7 +363,7 @@ public class Forg extends Controller{
 					shareRecordMap.put("id", shareRecord.getId());
 					shareRecordMap.put("bookId", shareRecord.getBookId());
 					shareRecordMap.put("userId", shareRecord.getUserId());
-					shareRecordMap.put("recordUrl", API.getAliOssAccessUrl("tasty", shareRecord.getRecordUrl(), 0));
+					shareRecordMap.put("recordUrl", API.getObjectAccessUrlSimple(shareRecord.getRecordUrl()));
 					shareRecordMap.put("nickName", shareRecord.getNickName());
 					shareRecordMap.put("avatar", shareRecord.getAvatar());
 					
@@ -379,7 +407,7 @@ public class Forg extends Controller{
 					othersRecordMap.put("playTimes", ReaderInfo==null?0:ReaderInfo.getPlayTimes());
 					othersRecordMap.put("bookId", aRecord.getBookId());
 					othersRecordMap.put("userId", aRecord.getUserId());
-					othersRecordMap.put("recordUrl",  StringUtils.isEmpty(aRecord.getRecordUrl())?null:API.getAliOssAccessUrl("tasty", aRecord.getRecordUrl(), 0));
+					othersRecordMap.put("recordUrl",  StringUtils.isEmpty(aRecord.getRecordUrl())?null:API.getObjectAccessUrlSimple(aRecord.getRecordUrl()));
 					othersRecordMap.put("nickName", aRecord.getNickName());
 					othersRecordMap.put("avatar", aRecord.getAvatar());
 					
@@ -404,7 +432,7 @@ public class Forg extends Controller{
 		}
 	}
 	
-	public static void listRecommedBooks(String session,int top){
+	/*public static void listRecommedBooks(String session,int top){
 		try{ 
 			CookBookUsersDDL user = UserService.findBySession(session);
 			if(user==null){
@@ -417,7 +445,7 @@ public class Forg extends Controller{
 					Map<String,Object> bookMap = new HashMap<String,Object>();
 					bookMap.put("id", book.getId());
 					bookMap.put("bookName", book.getBookName());
-					bookMap.put("bookCover", API.getAliOssAccessUrl("tasty", book.getBookCover(), 0));
+					bookMap.put("bookCover", API.getObjectAccessUrlSimple(book.getBookCover());
 					bookMap.put("bookDesc", book.getBookDesc());
 					bookMap.put("recommed", book.getRecommed());
 					bookMap.put("musicId", book.getMusicId()==null?-1:book.getMusicId()); 
@@ -434,9 +462,9 @@ public class Forg extends Controller{
 			Logger.error(e, e.getMessage());
 			renderJSON(RtnUtil.returnFail(e.getMessage()));
 		}
-	}
+	}*/
 	
-	public static void listLastBooks(String session,int page,int pageSize){
+	/*public static void listLastBooks(String session,int page,int pageSize){
 		try{ 
 			if(pageSize==0 || pageSize > 100){
 				pageSize = 100;
@@ -461,7 +489,7 @@ public class Forg extends Controller{
 					Map<String,Object> bookMap = new HashMap<String,Object>();
 					bookMap.put("id", book.getId());
 					bookMap.put("bookName", book.getBookName());
-					bookMap.put("bookCover", API.getAliOssAccessUrl("tasty", book.getBookCover(), 0));
+					bookMap.put("bookCover", API.getObjectAccessUrlSimple(book.getBookCover());
 					bookMap.put("bookDesc", book.getBookDesc());
 					bookMap.put("recommed", book.getRecommed());
 					bookMap.put("musicId", book.getMusicId()==null?-1:book.getMusicId()); 
@@ -478,7 +506,7 @@ public class Forg extends Controller{
 			Logger.error(e, e.getMessage());
 			renderJSON(RtnUtil.returnFail(e.getMessage()));
 		}
-	}
+	}*/
 	
 	public static void listRandomBooks(String session ){
 		try{   
@@ -493,7 +521,7 @@ public class Forg extends Controller{
 					Map<String,Object> bookMap = new HashMap<String,Object>();
 					bookMap.put("id", book.getId());
 					bookMap.put("bookName", book.getBookName());
-					bookMap.put("bookCover", API.getAliOssAccessUrl("tasty", book.getBookCover(), 0));
+					bookMap.put("bookCover", API.getObjectAccessUrlSimple(book.getBookCover()));
 					bookMap.put("bookDesc", book.getBookDesc());
 					bookMap.put("recommed", book.getRecommed());
 					bookMap.put("musicId", book.getMusicId()==null?-1:book.getMusicId()); 
@@ -513,7 +541,7 @@ public class Forg extends Controller{
 	}
 	
 	
-	public static void listHotBooks(String session,int page,int pageSize){
+	/*public static void listHotBooks(String session,int page,int pageSize){
 		try{  
 			if(pageSize==0 || pageSize > 100){
 				pageSize = 100;
@@ -537,7 +565,7 @@ public class Forg extends Controller{
 					Map<String,Object> bookMap = new HashMap<String,Object>();
 					bookMap.put("id", book.getId());
 					bookMap.put("bookName", book.getBookName());
-					bookMap.put("bookCover", API.getAliOssAccessUrl("tasty", book.getBookCover(), 0));
+					bookMap.put("bookCover", API.getObjectAccessUrlSimple(book.getBookCover());
 					bookMap.put("bookDesc", book.getBookDesc());
 					bookMap.put("recommed", book.getRecommed());
 					bookMap.put("musicId", book.getMusicId()==null?-1:book.getMusicId()); 
@@ -554,7 +582,7 @@ public class Forg extends Controller{
 			Logger.error(e, e.getMessage());
 			renderJSON(RtnUtil.returnFail(e.getMessage()));
 		}
-	}
+	}*/
 	
 	public static void recordCommit(String session,int bookId,String recordUrl,int recordTimingValue,
 			String pageIds,String voiceOsss
@@ -686,7 +714,7 @@ public class Forg extends Controller{
 				Map<String,Object> map = new HashMap<String,Object>();
 				map.put("id", forgMusic.getId());
 				map.put("name", forgMusic.getName());
-				map.put("url", API.getAliOssAccessUrl("tasty",forgMusic.getOssKey(), 0));
+				map.put("url", API.getObjectAccessUrlSimple(forgMusic.getOssKey()));
 				list.add(map);
 			} 
 			renderJSON(RtnUtil.returnSuccess("OK",list));
@@ -721,7 +749,7 @@ public class Forg extends Controller{
 			map.put("endTime", DateUtil.format(activity.getEndTime(),"yyyy-MM-dd"));
 			//活动是否进行中
 			map.put("status", activity.getEndTime()<=System.currentTimeMillis()?0:1);
-			map.put("prizeExamplePic",API.getAliOssAccessUrl("tasty", activity.getPrizeExamplePic(), 0));
+			map.put("prizeExamplePic",API.getObjectAccessUrlSimple(activity.getPrizeExamplePic()));
 			List<String> descList = new ArrayList<String>();
 			if(!StringUtils.isEmpty(activity.getActDesc1())){
 				descList.add(activity.getActDesc1());
@@ -825,7 +853,7 @@ public class Forg extends Controller{
 				map.put("status", status);
 				map.put("bookId", activity.getBookId());
 				map.put("id", activity.getId());
-				map.put("cover", API.getAliOssAccessUrl("tasty", activity.getBookCover(), 0));
+				map.put("cover", API.getObjectAccessUrlSimple(activity.getBookCover()));
 				map.put("title", activity.getActTitle());
 				map.put("startTime", DateUtil.format(activity.getStartTime(),"yyyy-MM-dd"));
 				map.put("endTime", DateUtil.format(activity.getEndTime(),"yyyy-MM-dd"));
@@ -845,7 +873,7 @@ public class Forg extends Controller{
 				renderJSON(RtnUtil.returnLoginFail());
 			} 
 			ForgReadingRecordDDL record = ForgBookRecordService.get(recordId);
-			String recordUrl = API.getAliOssAccessUrl("tasty", record.getRecordUrl(), 0);
+			String recordUrl = API.getObjectAccessUrlSimple(record.getRecordUrl());
 			renderJSON(RtnUtil.returnSuccess("OK",recordUrl));
 		}catch(Exception e){
 			Logger.error(e, e.getMessage());
@@ -853,10 +881,10 @@ public class Forg extends Controller{
 		}
 	}
 	
-	public static void listBooks(String session,int hotOrLast,int jx,int page,int pageSize){
+	public static void listBooks(String session,int hotOrLast,int recommend,int type,int page,int pageSize){
 		try{  
-			if(pageSize==0 || pageSize > 30){
-				pageSize = 30;
+			if(pageSize==0 || pageSize > 10){
+				pageSize = 10;
 			}
 			
 			CookBookUsersDDL user = UserService.findBySession(session);
@@ -864,22 +892,13 @@ public class Forg extends Controller{
 				renderJSON(RtnUtil.returnLoginFail());
 			}
 			List<Map<String,Object>> result = new ArrayList<Map<String,Object>>();
-			List<ForgReadingBooksDDL> list = ForgBookService.listBooks(hotOrLast,jx,page, pageSize);
-			if(list!=null && list.size()>0){
-				if(hotOrLast==1){
-					Collections.sort(list,new Comparator<ForgReadingBooksDDL>(){
-						@Override
-						public int compare(ForgReadingBooksDDL o1, ForgReadingBooksDDL o2) {
-							return o1.getFlows() - o2.getFlows();
-						}
-						
-					});
-				}
+			List<ForgReadingBooksDDL> list = ForgBookService.listBooks(hotOrLast,recommend,type,page, pageSize);
+			if(list!=null && list.size()>0){				
 				for(ForgReadingBooksDDL book:list){
 					Map<String,Object> bookMap = new HashMap<String,Object>();
 					bookMap.put("id", book.getId());
 					bookMap.put("bookName", book.getBookName());
-					bookMap.put("bookCover", API.getAliOssAccessUrl("tasty", book.getBookCover(), 0));
+					bookMap.put("bookCover", API.getObjectAccessUrlSimple(book.getBookCover()));
 					bookMap.put("bookDesc", book.getBookDesc());
 					bookMap.put("recommed", book.getRecommed());
 					bookMap.put("musicId", book.getMusicId()==null?-1:book.getMusicId()); 
@@ -892,6 +911,49 @@ public class Forg extends Controller{
 					result.add(bookMap);
 				}
 			}
+			renderJSON(RtnUtil.returnSuccess("OK",result));		
+		}catch(Exception e){
+			Logger.error(e, e.getMessage());
+			renderJSON(RtnUtil.returnFail(e.getMessage()));
+		}
+	}
+	
+	
+	public static void listBooks_new(String session,int hotOrLast,int recommend,int type,int page,int pageSize){
+		try{  
+			if(pageSize==0 || pageSize > 10){
+				pageSize = 10;
+			}
+			
+			CookBookUsersDDL user = UserService.findBySession(session);
+			if(user==null){
+				renderJSON(RtnUtil.returnLoginFail());
+			}
+			Map<String,Object> result = new HashMap<String,Object>();
+			List<Map<String,Object>> mapList = new ArrayList<Map<String,Object>>();
+			List<ForgReadingBooksDDL> list = ForgBookService.listBooks(hotOrLast,recommend,type,page, pageSize);
+			if(list!=null && list.size()>0){				
+				for(ForgReadingBooksDDL book:list){
+					Map<String,Object> bookMap = new HashMap<String,Object>();
+					bookMap.put("id", book.getId());
+					bookMap.put("bookName", book.getBookName());
+					bookMap.put("bookCover", API.getObjectAccessUrlSimple(book.getBookCover()));
+					bookMap.put("bookDesc", book.getBookDesc());
+					bookMap.put("recommed", book.getRecommed());
+					bookMap.put("musicId", book.getMusicId()==null?-1:book.getMusicId()); 
+					bookMap.put("uploaderUid", book.getUploaderUid());
+					bookMap.put("uploaderNickname", book.getUploaderNickname());
+					bookMap.put("uploaderAvatar", book.getUploaderAvatar());
+					bookMap.put("flows", book.getFlows());
+					bookMap.put("recordNumber", ForgBookRecordService.coutReaded(book.getId()));//录音数量
+					bookMap.put("createDate", DateUtil.format(book.getCreateTime(), "yyyy-MM-dd")); 
+					//计算多少时间前
+					bookMap.put("createDateDesc", DateUtil.timeDesc(book.getCreateTime()));
+					mapList.add(bookMap);
+				}
+			}
+			result.put("list", mapList);
+			result.put("total", ForgBookService.countBooks(hotOrLast, recommend, type));
 			renderJSON(RtnUtil.returnSuccess("OK",result));		
 		}catch(Exception e){
 			Logger.error(e, e.getMessage());
@@ -1179,7 +1241,7 @@ public class Forg extends Controller{
 			//是否有比赛
 			
 			boolean racing = false;
-			if(ForgActivityService.getActivity() !=null && Boolean.valueOf(Jws.configuration.getProperty("activity.closed","true"))){
+			if(ForgActivityService.getActivity() !=null && !Boolean.valueOf(Jws.configuration.getProperty("activity.closed","true"))){
 				racing = true;
 			}
 			
@@ -1324,7 +1386,7 @@ public class Forg extends Controller{
 						bookMap.put("id", book.getId());
 						bookMap.put("readId", record.getId());
 						bookMap.put("bookName", book.getBookName());
-						bookMap.put("bookCover", API.getAliOssAccessUrl("tasty", book.getBookCover(), 0));
+						bookMap.put("bookCover", API.getObjectAccessUrlSimple(book.getBookCover()));
 						bookMap.put("bookDesc", book.getBookDesc());
 						bookMap.put("time", DateUtil.format(record.getCreateTime())); 
 						result.add(bookMap);
@@ -1342,7 +1404,7 @@ public class Forg extends Controller{
 						Map<String,Object> bookMap = new HashMap<String,Object>();
 						bookMap.put("id", book.getId());
 						bookMap.put("bookName", book.getBookName());
-						bookMap.put("bookCover", API.getAliOssAccessUrl("tasty", book.getBookCover(), 0));
+						bookMap.put("bookCover", API.getObjectAccessUrlSimple(book.getBookCover()));
 						bookMap.put("bookDesc", book.getBookDesc());
 						bookMap.put("time", DateUtil.format(collect.getCollectTime())); 
 						result.add(bookMap);
@@ -1360,7 +1422,7 @@ public class Forg extends Controller{
 						Map<String,Object> bookMap = new HashMap<String,Object>();
 						bookMap.put("id", book.getId());
 						bookMap.put("bookName", book.getBookName());
-						bookMap.put("bookCover", API.getAliOssAccessUrl("tasty", book.getBookCover(), 0));
+						bookMap.put("bookCover", API.getObjectAccessUrlSimple(book.getBookCover()));
 						bookMap.put("bookDesc", book.getBookDesc());
 						bookMap.put("time", DateUtil.format(his.getReadTime())); 
 						result.add(bookMap);
@@ -1382,7 +1444,7 @@ public class Forg extends Controller{
 						bookMap.put("id", book.getId());
 						bookMap.put("readId", record.getId());
 						bookMap.put("bookName", book.getBookName());
-						bookMap.put("bookCover", API.getAliOssAccessUrl("tasty", book.getBookCover(), 0));
+						bookMap.put("bookCover", API.getObjectAccessUrlSimple(book.getBookCover()));
 						bookMap.put("bookDesc", book.getBookDesc());
 						bookMap.put("time", DateUtil.format(record.getCreateTime())); 
 						result.add(bookMap);
@@ -1447,7 +1509,7 @@ public class Forg extends Controller{
 				for(ForgSuggestDDL suggest : list){
 					Map<String,Object> one = new HashMap<String,Object>();
 					if(!StringUtils.isEmpty(suggest.getImg())){
-						one.put("img", API.getAliOssAccessUrl("tasty", suggest.getImg(), 0));
+						one.put("img", API.getObjectAccessUrlSimple(suggest.getImg()));
 					}
 					CookBookUsersDDL theUser = UserService.get(suggest.getUserId());
 					one.put("id", suggest.getId());
@@ -1528,7 +1590,7 @@ public class Forg extends Controller{
 			List<ForgMiniAppDDL> list = ForgMiniAppService.listMiniApps(page, pageSize);
 			if(list!=null && list.size()>0){
 				for(ForgMiniAppDDL mini : list){
-					mini.setLogo(API.getAliOssAccessUrl("tasty", mini.getLogo(), 0));
+					mini.setLogo(API.getObjectAccessUrlSimple(mini.getLogo()));
 				}
 			}
 			renderJSON(RtnUtil.returnSuccess("OK",list));	
